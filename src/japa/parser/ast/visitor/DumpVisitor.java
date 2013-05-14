@@ -772,9 +772,13 @@ public final class DumpVisitor implements VoidVisitor<Object> {
                 break;
         }
 
-        printer.print("(");
+        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
+            printer.print("(");
+        }
         n.getExpr().accept(this, arg);
-        printer.print(")");
+        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
+            printer.print(")");
+        }
 
         switch (n.getOperator()) {
             case posIncrement:
