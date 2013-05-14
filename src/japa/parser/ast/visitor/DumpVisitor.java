@@ -772,7 +772,9 @@ public final class DumpVisitor implements VoidVisitor<Object> {
                 break;
         }
 
+        printer.print("(");
         n.getExpr().accept(this, arg);
+        printer.print(")");
 
         switch (n.getOperator()) {
             case posIncrement:
