@@ -108,6 +108,8 @@ public class Generator {
      * Allocate a new state.
      */
     void newState() {
+        if (this.getCurrentStateNode() != null &&
+            this.getCurrentStateNode().getStmts().size() == 0) return;
         List<Statement> stmts = new ArrayList<Statement>();
         this.states.add(new SwitchEntryStmt(-1, -1,
                                             new IntegerLiteralExpr(-1, -1, "" + this.states.size()),
@@ -158,6 +160,7 @@ public class Generator {
      * Get the current state node.
      */
     SwitchEntryStmt getCurrentStateNode() {
+        if (this.getCurrentState() == -1) return null;
         return this.states.get(this.getCurrentState());
     }
 
