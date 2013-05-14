@@ -2,8 +2,6 @@ package genja.transform;
 
 import japa.parser.ast.stmt.Statement;
 
-import java.util.List;
-
 class LoopMarker {
     /**
      * The start point of this loop -- the point to jump to on either entry or continue.
@@ -24,7 +22,7 @@ class LoopMarker {
      * Make a break for this loop. This should only be called during exitLoop, when we have both
      * the start and end states.
      */
-    public List<Statement> generateBreakJump() {
+    public Statement generateBreakJump() {
         return Generator.generateJump(this.endState);
     }
 
@@ -32,7 +30,7 @@ class LoopMarker {
      * Make a continue for this loop. This should only be called during exitLoop, when we have both
      * the start and end states.
      */
-    public List<Statement> generateContinueJump() {
+    public Statement generateContinueJump() {
         return Generator.generateJump(this.startState);
     }
 

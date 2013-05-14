@@ -141,7 +141,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         s.newState();
 
         List<Statement> stmts = entryStateNode.getStmts();
-        stmts.addAll(Generator.generateDeferredJump(s.getCurrentState()));
+        stmts.add(Generator.generateDeferredJump(s.getCurrentState()));
         stmts.add(new ExpressionStmt(-1, -1, new AssignExpr(-1, -1,
                                                             Generator.CURRENT_VAR,
                                                             n.getExpr(),
@@ -495,7 +495,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
             throw new UnsupportedOperationException("not generator transformable");
         }
 
-        arg.addAllStatements(Generator.generateJump(-1));
+        arg.addStatement(Generator.generateJump(-1));
     }
 
     @Override
@@ -582,11 +582,11 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         SwitchEntryStmt consequentNode = s.getCurrentStateNode();
     
         // Create the consequent jump.
-        List<Statement> consequentJump = Generator.generateJump(s.getCurrentState());
+        Statement consequentJump = Generator.generateJump(s.getCurrentState());
         n.getThenStmt().accept(this, s);
     
         // Check if we have an alternate.
-        List<Statement> alternateJump = null;
+        Statement alternateJump = null;
         if (n.getElseStmt() != null) {
             // We have an alternate jump, so let's make a state for it.
             s.newState();
@@ -595,15 +595,15 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         }
  
         s.newState();
-        consequentNode.getStmts().addAll(Generator.generateJump(s.getCurrentState()));
+        consequentNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
 
         // Add the if into the node we remembered.
         entryStateNode.getStmts().add(new IfStmt(-1, -1, n.getCondition(),
-                                                 new BlockStmt(-1, -1, -1, -1, consequentJump),
-                                                 alternateJump == null ? null : new BlockStmt(-1, -1, -1, -1, alternateJump)));
+                                                 consequentJump,
+                                                 alternateJump == null ? null : alternateJump));
 
         // Add a jump at the end of the if block to skip all bodies.
-        entryStateNode.getStmts().addAll(Generator.generateJump(s.getCurrentState()));
+        entryStateNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
     
     }
 
@@ -665,7 +665,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         s.enterLoop();
         s.newState();
         n.getBody().accept(this, s);
-        s.addAllStatements(s.loop.generateContinueJump());
+        s.addStatement(s.loop.generateContinueJump());
         s.newState();
         s.exitLoop();
     }

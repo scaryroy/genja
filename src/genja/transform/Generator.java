@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.Map;
 
 import japa.parser.ast.expr.AssignExpr;
+import japa.parser.ast.expr.BooleanLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.NameExpr;
+import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.BreakStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
+import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.SwitchEntryStmt;
 import japa.parser.ast.stmt.SwitchStmt;
@@ -70,21 +73,21 @@ public class Generator {
      * Generate a deferred jump. This sets the state to a given state number, but doesn't perform
      * the jump.
      */
-    public static List<Statement> generateDeferredJump(int state) {
-        List<Statement> stmts = new ArrayList<Statement>();
-        stmts.add(new ExpressionStmt(-1, -1, new AssignExpr(-1, -1, STATE_VAR,
-                                                            new IntegerLiteralExpr(-1, -1, "" + state),
-                                                            AssignExpr.Operator.assign)));
-        return stmts;
+    public static Statement generateDeferredJump(int state) {
+        return new ExpressionStmt(-1, -1, new AssignExpr(-1, -1, STATE_VAR,
+                                                         new IntegerLiteralExpr(-1, -1, "" + state),
+                                                         AssignExpr.Operator.assign));
     }
 
     /**
      * Generate an immediate jump.
      */
-    public static List<Statement> generateJump(int state) {
-        List<Statement> stmts = generateDeferredJump(state);
+    public static Statement generateJump(int state) {
+        List<Statement> stmts = new ArrayList<Statement>();
+        stmts.add(generateDeferredJump(state));
         stmts.add(new BreakStmt(-1, -1, null));
-        return stmts;
+        return new IfStmt(-1, -1, new BooleanLiteralExpr(-1, -1, true),
+                          new BlockStmt(-1, -1, -1, -1, stmts), null);
     }
 
     /**

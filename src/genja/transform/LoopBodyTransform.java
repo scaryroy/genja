@@ -63,7 +63,9 @@ class LoopBodyTransform extends GenericVisitorAdapter<List<Statement>, LoopMarke
             return null;
         }
 
-        return loop.generateBreakJump();
+        List<Statement> stmts = new ArrayList<Statement>();
+        stmts.add(loop.generateBreakJump());
+        return stmts;
     }
 
     public List<Statement> visit(ContinueStmt n, LoopMarker loop) {
@@ -71,10 +73,14 @@ class LoopBodyTransform extends GenericVisitorAdapter<List<Statement>, LoopMarke
             return null;
         }
 
+        List<Statement> stmts = new ArrayList<Statement>();
+
         if (!n.getId().equals(".loop")) {
             // TODO: Ensure we're not jumping somewhere really weird.
-            return Generator.generateJump(s.labels.get(n.getId()).continuePoint);
+            stmts.add(Generator.generateJump(s.labels.get(n.getId()).continuePoint));
+        } else {
+            stmts.add(loop.generateContinueJump());
         }
-        return loop.generateContinueJump();
+        return stmts;
     }
 }
