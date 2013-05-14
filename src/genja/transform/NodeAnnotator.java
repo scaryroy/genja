@@ -177,17 +177,17 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(MethodDeclaration n, Void arg) {
-        boolean hasYield = false;
+        boolean needsProcessing = false;
 
         if (n.getBody() != null) {
-            hasYield = n.getBody().accept(this, arg);
+            needsProcessing = n.getBody().accept(this, arg);
         }
 
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
     }
 
     @Override
@@ -417,18 +417,18 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(BlockStmt n, Void arg) {
-        boolean hasYield = false;
+        boolean needsProcessing = false;
 
         if (n.getStmts() != null) {
             for (Statement s : n.getStmts()) {
-                hasYield = s.accept(this, arg) || hasYield;
+                needsProcessing = s.accept(this, arg) || needsProcessing;
             }
         }
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
 
     }
 
@@ -456,39 +456,40 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(SwitchStmt n, Void arg) {
-        boolean hasYield = false;
+        boolean needsProcessing = false;
 
         n.getSelector().accept(this, arg);
         if (n.getEntries() != null) {
             for (SwitchEntryStmt e : n.getEntries()) {
-                hasYield = e.accept(this, arg) || hasYield;
+                needsProcessing = e.accept(this, arg) || needsProcessing;
             }
         }
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
     }
 
     @Override
     public Boolean visit(SwitchEntryStmt n, Void arg) {
-        boolean hasYield = false;
+        boolean needsProcessing = false;
 
         if (n.getStmts() != null) {
             for (Statement s : n.getStmts()) {
-                hasYield = s.accept(this, arg) || hasYield;
+                needsProcessing = s.accept(this, arg) || needsProcessing;
             }
         }
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
     }
 
     @Override
     public Boolean visit(BreakStmt n, Void arg) {
+        // TODO: this flattens ALL loops (i.e. more than necessary)
         NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
         n.setData(nodeAnnotation);
         return true;
@@ -501,15 +502,15 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(IfStmt n, Void arg) {
-        boolean hasYield = n.getThenStmt().accept(this, arg);
+        boolean needsProcessing = n.getThenStmt().accept(this, arg);
 
-        hasYield = (n.getElseStmt() != null && n.getElseStmt().accept(this, arg)) || hasYield;
+        needsProcessing = (n.getElseStmt() != null && n.getElseStmt().accept(this, arg)) || needsProcessing;
         
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
     }
 
     @Override
@@ -524,6 +525,7 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(ContinueStmt n, Void arg) {
+        // TODO: this flattens ALL loops (i.e. more than necessary)
         NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
         n.setData(nodeAnnotation);
         return true;
@@ -576,23 +578,23 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(TryStmt n, Void arg) {
-        boolean hasYield = n.getTryBlock().accept(this, arg);
+        boolean needsProcessing = n.getTryBlock().accept(this, arg);
 
         if (n.getCatchs() != null) {
             for (CatchClause c : n.getCatchs()) {
-                hasYield = c.accept(this, arg) || hasYield;
+                needsProcessing = c.accept(this, arg) || needsProcessing;
             }
         }
 
         if (n.getFinallyBlock() != null) {
-            hasYield = n.getFinallyBlock().accept(this, arg) || hasYield;
+            needsProcessing = n.getFinallyBlock().accept(this, arg) || needsProcessing;
         }
 
-        if (hasYield) {
+        if (needsProcessing) {
             NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
             n.setData(nodeAnnotation);
         }
-        return hasYield;
+        return needsProcessing;
     }
 
     @Override

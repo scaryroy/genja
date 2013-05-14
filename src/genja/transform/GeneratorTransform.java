@@ -122,7 +122,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         n.accept(new NodeAnnotator(), null);
 
         for (Statement stmt : n.getBody().getStmts()) {
-            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).hasYield) {
+            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).needsProcessing) {
                 stmt.accept(this, s);
             } else {
                 s.addStatement(stmt);
@@ -551,7 +551,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         // Either add statements from the block into the transformer state, or process them because
         // we have yields in them.
         for (Statement stmt : n.getStmts()) {
-            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).hasYield) {
+            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).needsProcessing) {
                 stmt.accept(this, s);
             } else {
                 s.addStatement(stmt);

@@ -2,11 +2,12 @@ package genja.transform;
 
 class NodeAnnotation {
     /**
-     * The node has a yield somewhere in its children (or is a yield itself).
+     * The node has a yield somewhere in its children (or is a yield itself),
+     * or is a break, or is a continue.
      */
-    boolean hasYield;
+    boolean needsProcessing;
 
-    public NodeAnnotation(boolean hasYield) {
-        this.hasYield = hasYield;
+    public NodeAnnotation(boolean needsProcessing) {
+        this.needsProcessing = needsProcessing;
     }
 }
