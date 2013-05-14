@@ -1,0 +1,672 @@
+package genja.transform;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.sun.tools.internal.ws.wsdl.document.jaxws.Exception;
+
+import japa.parser.ast.BlockComment;
+import japa.parser.ast.CompilationUnit;
+import japa.parser.ast.ImportDeclaration;
+import japa.parser.ast.LineComment;
+import japa.parser.ast.Node;
+import japa.parser.ast.PackageDeclaration;
+import japa.parser.ast.TypeParameter;
+import japa.parser.ast.body.AnnotationDeclaration;
+import japa.parser.ast.body.AnnotationMemberDeclaration;
+import japa.parser.ast.body.ClassOrInterfaceDeclaration;
+import japa.parser.ast.body.ConstructorDeclaration;
+import japa.parser.ast.body.EmptyMemberDeclaration;
+import japa.parser.ast.body.EmptyTypeDeclaration;
+import japa.parser.ast.body.EnumConstantDeclaration;
+import japa.parser.ast.body.EnumDeclaration;
+import japa.parser.ast.body.FieldDeclaration;
+import japa.parser.ast.body.InitializerDeclaration;
+import japa.parser.ast.body.JavadocComment;
+import japa.parser.ast.body.MethodDeclaration;
+import japa.parser.ast.body.Parameter;
+import japa.parser.ast.body.VariableDeclarator;
+import japa.parser.ast.body.VariableDeclaratorId;
+import japa.parser.ast.expr.ArrayAccessExpr;
+import japa.parser.ast.expr.ArrayCreationExpr;
+import japa.parser.ast.expr.ArrayInitializerExpr;
+import japa.parser.ast.expr.AssignExpr;
+import japa.parser.ast.expr.BinaryExpr;
+import japa.parser.ast.expr.BooleanLiteralExpr;
+import japa.parser.ast.expr.CastExpr;
+import japa.parser.ast.expr.CharLiteralExpr;
+import japa.parser.ast.expr.ClassExpr;
+import japa.parser.ast.expr.ConditionalExpr;
+import japa.parser.ast.expr.DoubleLiteralExpr;
+import japa.parser.ast.expr.EnclosedExpr;
+import japa.parser.ast.expr.Expression;
+import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.InstanceOfExpr;
+import japa.parser.ast.expr.IntegerLiteralExpr;
+import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
+import japa.parser.ast.expr.LongLiteralExpr;
+import japa.parser.ast.expr.LongLiteralMinValueExpr;
+import japa.parser.ast.expr.MarkerAnnotationExpr;
+import japa.parser.ast.expr.MemberValuePair;
+import japa.parser.ast.expr.MethodCallExpr;
+import japa.parser.ast.expr.NameExpr;
+import japa.parser.ast.expr.NormalAnnotationExpr;
+import japa.parser.ast.expr.NullLiteralExpr;
+import japa.parser.ast.expr.ObjectCreationExpr;
+import japa.parser.ast.expr.QualifiedNameExpr;
+import japa.parser.ast.expr.SingleMemberAnnotationExpr;
+import japa.parser.ast.expr.StringLiteralExpr;
+import japa.parser.ast.expr.SuperExpr;
+import japa.parser.ast.expr.SuperMemberAccessExpr;
+import japa.parser.ast.expr.ThisExpr;
+import japa.parser.ast.expr.UnaryExpr;
+import japa.parser.ast.expr.VariableDeclarationExpr;
+import japa.parser.ast.stmt.AssertStmt;
+import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.BreakStmt;
+import japa.parser.ast.stmt.CatchClause;
+import japa.parser.ast.stmt.ContinueStmt;
+import japa.parser.ast.stmt.DoStmt;
+import japa.parser.ast.stmt.EmptyStmt;
+import japa.parser.ast.stmt.ExplicitConstructorInvocationStmt;
+import japa.parser.ast.stmt.ExpressionStmt;
+import japa.parser.ast.stmt.ForStmt;
+import japa.parser.ast.stmt.ForeachStmt;
+import japa.parser.ast.stmt.IfStmt;
+import japa.parser.ast.stmt.LabeledStmt;
+import japa.parser.ast.stmt.ReturnStmt;
+import japa.parser.ast.stmt.Statement;
+import japa.parser.ast.stmt.SwitchEntryStmt;
+import japa.parser.ast.stmt.SwitchStmt;
+import japa.parser.ast.stmt.SynchronizedStmt;
+import japa.parser.ast.stmt.ThrowStmt;
+import japa.parser.ast.stmt.TryStmt;
+import japa.parser.ast.stmt.TypeDeclarationStmt;
+import japa.parser.ast.stmt.WhileStmt;
+import japa.parser.ast.stmt.YieldStmt;
+import japa.parser.ast.type.ClassOrInterfaceType;
+import japa.parser.ast.type.PrimitiveType;
+import japa.parser.ast.type.ReferenceType;
+import japa.parser.ast.type.VoidType;
+import japa.parser.ast.type.WildcardType;
+import japa.parser.ast.visitor.VoidVisitor;
+
+public class GeneratorTransform implements VoidVisitor<Generator> {
+    /**
+     * Make a loop condition enforced.
+     */
+    private static Statement makeLoopCondition(Expression cond) {
+        if (cond == null) return null;
+
+        return new IfStmt(-1, -1, new UnaryExpr(-1, -1, cond, UnaryExpr.Operator.not),
+                          new BreakStmt(-1, -1, null), null);
+    }
+
+    /**
+     * Make an infinite loop expression. This is the only kind of loop compatible with
+     * transformLoop.
+     */
+    public static Statement makeLoopStmt(Statement body) {
+        return new ForStmt(-1, -1, null, null, null, body);
+    }
+
+    /**
+     * Transform a method declaration.
+     */
+    @Override
+    public void visit(MethodDeclaration n, Generator s) {
+        if (!n.isGenerator()) {
+            throw new UnsupportedOperationException("cannot transform non-generator");
+        }
+
+        n.accept(new NodeAnnotator(), null);
+
+        for (Statement stmt : n.getBody().getStmts()) {
+            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).hasYield) {
+                stmt.accept(this, s);
+            } else {
+                s.addStatement(stmt);
+            }
+        }
+    }
+
+    /**
+     * Transform a yield.
+     */
+    @Override
+    public void visit(YieldStmt n, Generator s) {
+        // Remember the state to add the deferred jump to.
+        SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
+
+        s.newState();
+
+        List<Statement> stmts = entryStateNode.getStmts();
+        stmts.addAll(Generator.generateDeferredJump(s.getCurrentState()));
+        stmts.add(new ExpressionStmt(-1, -1, new AssignExpr(-1, -1,
+                                                            Generator.CURRENT_VAR,
+                                                            n.getExpr(),
+                                                            AssignExpr.Operator.assign)));
+        stmts.add(new ReturnStmt(-1, -1, new BooleanLiteralExpr(-1, -1, true)));
+    }
+
+    @Override
+    public void visit(Node n, Generator arg) {
+        throw new IllegalStateException(n.getClass().getName());
+    }
+
+    @Override
+    public void visit(CompilationUnit n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(PackageDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ImportDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(TypeParameter n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(LineComment n, Generator arg) {
+        return;
+    }
+
+    @Override
+    public void visit(BlockComment n, Generator arg) {
+        return;
+    }
+
+    @Override
+    public void visit(ClassOrInterfaceDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(EnumDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(EmptyTypeDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(EnumConstantDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(AnnotationDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(AnnotationMemberDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(FieldDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(VariableDeclarator n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(VariableDeclaratorId n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ConstructorDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(Parameter n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(EmptyMemberDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(InitializerDeclaration n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(JavadocComment n, Generator arg) {
+        return;
+    }
+
+    @Override
+    public void visit(ClassOrInterfaceType n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(PrimitiveType n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ReferenceType n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(VoidType n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(WildcardType n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ArrayAccessExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ArrayCreationExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ArrayInitializerExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(AssignExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(BinaryExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(CastExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ClassExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ConditionalExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(EnclosedExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(FieldAccessExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(InstanceOfExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(StringLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(IntegerLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(LongLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(IntegerLiteralMinValueExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(LongLiteralMinValueExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(CharLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(DoubleLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(BooleanLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(NullLiteralExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(MethodCallExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(NameExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ObjectCreationExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(QualifiedNameExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(SuperMemberAccessExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ThisExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(SuperExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(UnaryExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(VariableDeclarationExpr n, Generator arg) {
+        // TODO: we actually want to visit this :|
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(MarkerAnnotationExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(SingleMemberAnnotationExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(NormalAnnotationExpr n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(MemberValuePair n, Generator arg) {
+        throw new UnsupportedOperationException("not generator transformable");
+    }
+
+    @Override
+    public void visit(ExplicitConstructorInvocationStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(TypeDeclarationStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(AssertStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(EmptyStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(ExpressionStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(SwitchStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(SwitchEntryStmt n, Generator arg) {
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(BreakStmt n, Generator arg) {
+        if (n.getId() == null) {
+            arg.addStatement(new BreakStmt(-1, -1, ".loop"));
+            return;
+        }
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(ReturnStmt n, Generator arg) {
+        if (n.getExpr() != null) {
+            throw new UnsupportedOperationException("not generator transformable");
+        }
+
+        arg.addAllStatements(Generator.generateJump(-1));
+    }
+
+    @Override
+    public void visit(ContinueStmt n, Generator arg) {
+        if (n.getId() == null) {
+            arg.addStatement(new ContinueStmt(-1, -1, ".loop"));
+            return;
+        }
+        arg.addStatement(n);
+    }
+
+    @Override
+    public void visit(DoStmt n, Generator arg) {
+        // TODO reword loop
+        
+    }
+
+    @Override
+    public void visit(ForeachStmt n, Generator arg) {
+        // TODO reword loop
+        
+    }
+
+    @Override
+    public void visit(ThrowStmt n, Generator arg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(SynchronizedStmt n, Generator arg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(TryStmt n, Generator arg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(CatchClause n, Generator arg) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(BlockStmt n, Generator s) {
+        if (n.getStmts() == null) return;
+        s.enterBlock();
+
+        // Either add statements from the block into the transformer state, or process them because
+        // we have yields in them.
+        for (Statement stmt : n.getStmts()) {
+            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).hasYield) {
+                stmt.accept(this, s);
+            } else {
+                s.addStatement(stmt);
+            }
+        }
+    
+        s.exitBlock();
+    }
+
+    @Override
+    public void visit(LabeledStmt n, Generator s) {
+        // Create a new state so we can jump back here, if necessary.
+        s.newState();
+        TransitionPoint p = new TransitionPoint(s.getCurrentState(), -1);
+        s.addLabel(n.getLabel(), p);
+        n.getStmt().accept(this, s);
+        s.newState();
+        p.breakPoint = s.getCurrentState();
+    }
+
+    @Override
+    public void visit(IfStmt n, Generator s) {
+        // Remember the state if should be executed in.
+        SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
+    
+        // Create a node for the consequent.
+        s.newState();
+        SwitchEntryStmt consequentNode = s.getCurrentStateNode();
+    
+        // Create the consequent jump.
+        List<Statement> consequentJump = Generator.generateJump(s.getCurrentState());
+        n.getThenStmt().accept(this, s);
+    
+        // Check if we have an alternate.
+        List<Statement> alternateJump = null;
+        if (n.getElseStmt() != null) {
+            // We have an alternate jump, so let's make a state for it.
+            s.newState();
+            n.getElseStmt().accept(this, s);
+            alternateJump = Generator.generateJump(s.getCurrentState());
+        }
+ 
+        s.newState();
+        consequentNode.getStmts().addAll(Generator.generateJump(s.getCurrentState()));
+
+        // Add the if into the node we remembered.
+        entryStateNode.getStmts().add(new IfStmt(-1, -1, n.getCondition(),
+                                                 new BlockStmt(-1, -1, -1, -1, consequentJump),
+                                                 alternateJump == null ? null : new BlockStmt(-1, -1, -1, -1, alternateJump)));
+
+        // Add a jump at the end of the if block to skip all bodies.
+        entryStateNode.getStmts().addAll(Generator.generateJump(s.getCurrentState()));
+    
+    }
+
+    @Override
+    public void visit(WhileStmt n, Generator s) {
+        // Reword the loop.
+        List<Statement> stmts = new ArrayList<Statement>();
+        stmts.add(makeLoopCondition(n.getCondition()));
+        stmts.add(n.getBody());
+        BlockStmt b = new BlockStmt(-1, -1, -1, -1, stmts);
+        Statement loop = makeLoopStmt(b);
+
+        // Loop needs reannotation.
+        loop.accept(new NodeAnnotator(), null);
+        loop.accept(this, s);
+    }
+
+    @Override
+    public void visit(ForStmt n, Generator s) {
+        if (n.getInit() != null || n.getCompare() != null || n.getUpdate() != null) {
+            // Reword the loop.
+            List<Statement> stmts = new ArrayList<Statement>();
+    
+            // We initialize in a scope above the actual loop body.
+            for (Expression e : n.getInit()) {
+                stmts.add(new ExpressionStmt(e.getBeginLine(), e.getBeginColumn(), e));
+            }
+    
+            // We move the check, body and update into a sub-block.
+            List<Statement> substmts = new ArrayList<Statement>();
+            Statement loopCond = makeLoopCondition(n.getCompare());
+            if (loopCond != null) substmts.add(loopCond);
+            substmts.add(n.getBody());
+    
+            for (Expression e : n.getUpdate()) {
+                substmts.add(new ExpressionStmt(e.getBeginLine(), e.getBeginColumn(), e));
+            }
+    
+            stmts.add(new BlockStmt(n.getBody().getBeginLine(),
+                                    n.getBody().getBeginColumn(),
+                                    n.getBody().getEndLine(),
+                                    n.getBody().getEndColumn(),
+                                    substmts));
+    
+            BlockStmt b = new BlockStmt(n.getBody().getBeginLine(),
+                                        n.getBody().getBeginColumn(),
+                                        n.getBody().getEndLine(),
+                                        n.getBody().getEndColumn(),
+                                        stmts);
+            Statement loop = makeLoopStmt(b);
+
+            // Loop needs reannotation.
+            loop.accept(new NodeAnnotator(), null);
+            loop.accept(this, s);
+            return;
+        }
+    
+        // We have an infinite loop, which is in the correct form for us to transform.
+        s.enterLoop();
+        s.newState();
+        n.getBody().accept(this, s);
+        s.addAllStatements(s.loop.generateContinueJump());
+        s.newState();
+        s.exitLoop();
+    }
+}
