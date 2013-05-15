@@ -1,0 +1,409 @@
+\documentclass[journal,a4paper]{IEEEtran}
+
+\usepackage{texments}
+\usepackage{algpseudocode}
+
+\usestyle{default}
+
+\begin{document}
+
+\title{Java with Generators}
+\author{Tony~Young, Student ID: 5383914, University of Auckland}%
+
+\maketitle
+
+\begin{abstract}
+
+This report details the implementation of \emph{generators} in Java -- a specialized case of
+continuations that allow the execution of code to be paused within a method body at specific
+\emph{yield} points. It introduces \emph{linearization} as the primary technique for achieving
+this, with additional supplementary algorithms to transform code to adhere to the semantics of Java.
+
+\end{abstract}
+
+\section{Introduction}
+
+Generators are a language feature found in various modern languages. They enable sequential code to
+be paused at specific \emph{yield} points, making it useful for tasks such as iterating through a
+binary tree or creating lazy, infinite lists (à la Haskell) without having to explicitly keep track
+of where execution is.
+
+This implementation of generators extends Java syntax in two ways:
+
+\begin{itemize}
+\item An extension to the Java method syntax. Before the method name, we allow an optional
+      \texttt{*} token that signifies the method is a generator that will yield values of the type
+      specified for the method.
+
+\item The introduction of a \texttt{yield} statement. It is allowed only in starred generator
+      methods and takes an expression that will be returned a subsequent execution of the
+      generator.
+\end{itemize}
+
+For simplicity's sake, generators in this implementation are unidirectional and only yield values
+out (such as in C\#), unlike the generators in Python or ECMAScript Harmony can have values ``sent"
+to them.
+
+\section{Transformation}
+
+The code is transformed in a multi-pass fashion -- the bulk of transformation is done during the
+linearization process (section~\ref{section:linearization}), but some pre- and post-processing
+passes are employed to make linearization simpler.
+
+\subsection{Loop Desugaring}
+
+The first phase of generator transformation is loop desugaring. In this phase, we transform all
+loops into a \emph{canonical form}, which is proposed to be the following:
+
+\begin{pygmented}{java}
+for (;;) {
+    // loop body
+}
+\end{pygmented}
+
+The canonical loop form represents an infinite loop -- however, the loop body may contain
+\texttt{break} and \texttt{continue} statements to mimic sugared loop forms.
+
+As such, automated conversion can be employed from other forms of loops (such as \texttt{while},
+\texttt{for} and \texttt{do}). For a full list of conversions from canonical loop forms, refer to
+appendix~\ref{appendix:canonical-loop-forms}.
+
+\subsection{Scope Mangling}
+
+Java employs block-level scoping for variables -- for example, variables declared inside an
+\texttt{if} block will not be visible upon exit of the \texttt{if} block. Due to linearization
+(section~\ref{section:linearization}), we cannot preserve blocks and, consequently, we cannot use
+variable names in the form they are suggested by the code, for example:
+
+\begin{pygmented}{java}
+int i = 0;
+{
+    int i = 1;
+    {
+        int i = 2;
+    }
+}
+\end{pygmented}
+
+\texttt{i} should be 0 on the exit of the block but, if names are not mangled prior to
+linearization, the value will be 2 (or, worse yet, an error -- we've attempted to redeclare
+\texttt{i}).
+
+As such, we mangle variable names in deeper scopes to ensure they don't conflict with variable
+names in higher scopes. Figure~\ref{algorithm:scope-mangling} details a basic algorithm for name
+mangling.
+
+\begin{figure}
+\begin{algorithmic}
+\Function{ScopeMangle}{node}
+    \State id $\gets$ 0
+    \For{b $\in$ node's blocks}
+        \ForAll{d $\in$ b's declarations}
+            \State \Call{Prepend}{id, d's variable name}
+        \EndFor
+
+        \ForAll{e $\in$ b's expressions}
+            \For{n $\in$ e's referenced names}
+                \State \Call{Prepend}{n's block's id, n}
+            \EndFor
+        \EndFor
+        \State id $\gets$ id + 1
+    \EndFor
+\EndFunction
+\end{algorithmic}
+\caption{Scope mangling algorithm.}
+\label{algorithm:scope-mangling}
+\end{figure}
+
+In practice, the block ID is not a simple monotonically increasing number. For the implementation
+provided, the blocks are first numbered off by their offset to the start of the parent. The
+variables are then mangled using successive prepending of block numbers from the block the variable
+is declared in to the root of the method -- for example, in the example given earlier, the three
+variables will be mangled to \texttt{i}, \texttt{s0\$i} and \texttt{s0\$s0\$i} (root scope, scope
+0, and scope 0 inside scope 0).
+
+\subsection{Linearization} \label{section:linearization}
+
+The linearization (pertaining to loop linearization) pass processes the control flow graph and
+transforms it into a state machine. This is required because we can then create states that
+represents the pausing of the state machine, at given yield points. Additionally, linearized
+control structures enable us to perform arbitrary jumps into the code -- such as jumps into code
+after the yield point to simulate resumes.
+
+Before linearization, we employ a node marking scheme to avoid excessive linearization. The
+algorithm is detailed in figure~\ref{algorithm:mark-for-linearizing} details which nodes are
+selected to be linearized. In particular, any node containing a \texttt{yield}, \texttt{break} or
+\texttt{continue} must be linearized, as well as all of their ancestors.
+
+\begin{figure}
+\begin{algorithmic}
+\Function{MarkLinearization}{node}
+    \If{node $\in$ yields $\cup$ breaks $\cup$ continues}
+        \State \Call{Mark}{node}
+        \State \Return True
+    \EndIf
+    \ForAll{n $\in$ node's children}
+        \If{\Call{MarkLinearization}{n}}
+            \State \Call{Mark}{n}
+        \EndIf
+    \EndFor
+    \If{nodes were marked}
+        \State \Return True
+    \Else
+        \State \Return False
+    \EndIf
+\EndFunction\end{algorithmic}
+\caption{Linearization marking algorithm.}
+\label{algorithm:mark-for-linearizing}
+\end{figure}
+
+Once we have the nodes for linearization, we apply the linearization transforms to control flow
+described in appendix~\ref{appendix:linearizations}. States are in the form of \texttt{case}
+statements, which denote a state number that can be jumped to by setting the appropriate state
+number and \texttt{break}ing from the case.
+
+We keep track of two things during linearization: labels and loops. A loop can be considered an
+implicit label, but we eliminate them immediately at the end of a loop block linearization. A label
+refers to a statement that can be jumped to, but only from a child statement of the labeled
+statement.
+
+When the transformer encounters a label statement, we push the label onto the stack of labels with
+its name, as well as onto the map of labels indexed by string. The label will also have the start
+state associated with it, i.e. the point we will jump to if we \texttt{continue} to it. After we
+process the label's child statement, we know the state at which the statement ends so we set that
+as the point that we jump to if we attempt to \texttt{break} to it. During transformation of child
+\texttt{break} and \texttt{continue} statements, we verify that we only ever attempt to
+\texttt{break} or \texttt{continue} to labels found in parent node.
+
+When the transformer encounters a canonical loop, we repeat the same procedure we did with the
+labels with the exception that we do not add them to the map of labels, nor do we name the loop
+labels. The transformer will then transform any label-less \texttt{break} and \texttt{continue}
+statements it finds into labeled ones, using the special label \texttt{.loop} to denote the current
+loop. After the transformer exits the canonical loop, it runs intra-loop jump resolution (see
+section~\ref{section:intra-loop-jump-resolution}).
+
+When the transformer encounters yield statements, we create a state for resuming execution when we
+resume the state machine. In the previous state, we create a deferred jump to the resume state, set
+the yielded value as the current value emitted by the state machine and then return true from the
+state machine to signify that the current value has changed.
+
+Finally, after all the code has been linearized, we create a trap state that always deferred-jumps
+to itself and returns false. This ensures we don't execute random code in the state machine.
+
+In order to resolve jumps, we employ two techniques:
+
+\subsubsection{Intra-Loop Jump Resolution} \label{section:intra-loop-jump-resolution}
+
+Once we have fully linearized a canonical loop block, the \texttt{break} and \texttt{continue}
+statements inside them can be dereferenced appropriately. When we encounter \texttt{break .loop},
+we emit a jump to the loop's end point (also known as the \emph{break point}). Likewise, when we
+encounter \texttt{continue .loop}, we emit a jump to the loop's start point (or \emph{continue
+point}).
+
+\subsubsection{Labeled Jump Resolution}
+
+The initial linearization pass should have already verified that we aren't performing jumps to
+non-ancestral blocks. As such, we just look up labels in the linearization context and generate
+jumps to them for \texttt{break} statements. \texttt{continue} statements are not supported, and
+use of them is a semantic error.
+
+At this point, we expect no more \texttt{break}s or \texttt{continue}s that haven't been
+dereferenced.
+
+\subsection{Wrapping}
+
+Linearization will have created a full state machine, which must then be wrapped in a
+\texttt{switch} statement wrapped in an infinite loop to facilitate jumping between states. This
+implementation provided supplies a runtime class, \texttt{genja.rt.Generator}, that wraps the
+generator to conform to Java's iterator interface. This class adopts slightly different semantics
+from standard iterators, due to the fact that generators are slightly different to Java iterators.
+
+A \texttt{hasNext()} call on a \texttt{genja.rt.Generator} will resume the underlying state machine
+and set the last state machine success result if and only if the generator's stale flag is set to
+true. If the stale flag is not set, we simply return the last state machine success result.
+
+A \texttt{next()} call on a \texttt{genja.rt.Generator} will make a call to \texttt{hasNext()} if
+and only if the generator's stale flag is set to true. Otherwise, we return the current value
+yielded from the state machine and set the stale flag to true.
+
+\section{Known Issues}
+
+Due to the time constraints of this assignment, the following features have not been implemented.
+
+\begin{itemize}
+\item try-catch-finally. This involves catching exceptions at every state that is surrounded by
+      a try block -- possibly multiple try blocks. Additional machine states are generated for
+      catches, and an unconditional jump needs to be generated to finally states.
+
+\item Duplicate state elimination. The linearization pass generates states at each point where
+      execution could jump to or be resumed at. These are often duplicated and can be eliminated
+      after linearization.
+
+\item Unreachable jump elimination. Occasionally, the linearization pass generates unconditional
+      jumps directly after unconditional jumps. These, of course, have no effect and can be
+      removed.
+
+\item Selective loop desugaring. Currently, all loops are desugared. This could be eliminated with
+      an additional annotation pass before desugaring, and making the desugaring pass aware of
+      annotations.
+
+\item Selective loop linearization. Currently, all loops (except for infinite ones) are linearized
+      completely. This is because the node annotator chooses to mark \texttt{break} and
+      \texttt{continue} as statements that require a linearized block -- as these statements can
+      jump into linearized code from a non-linearized block.
+\end{itemize}
+
+\section{Conclusion}
+
+Through a multi-pass compilation process, we can effectively generate state machines in Java via
+linearization of control flow. These can then be in turn transformed into generators and made
+compatible with Java's iterators to facilitate various interesting constructs, such as infinite
+lazy lists and abandonable loop processing from yield points.
+
+\appendix
+\subsection{Canonical Loop Forms} \label{appendix:canonical-loop-forms}
+
+Here are the canonical loop forms for various types of loops.
+
+\subsubsection{\texttt{while}}
+
+\begin{pygmented}{java}
+while (pred) {
+    body;
+}
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+for (;;) {
+    if (!pred) break;
+    body;
+}
+\end{pygmented}
+
+\subsubsection{\texttt{do}}
+
+\begin{pygmented}{java}
+do {
+    body;
+} while (pred)
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+for (;;) {
+    body;
+    if (!pred) break;
+}
+\end{pygmented}
+
+\subsubsection{\texttt{for} (non-canonical loop)}
+
+\begin{pygmented}{java}
+for (init; pred; update) {
+    body;
+}
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+{
+    init;
+    for (;;) {
+        if (!pred) break;
+        body;
+        update;
+    }
+}
+\end{pygmented}
+
+\subsection{Linearizations} \label{appendix:linearizations}
+
+Here are linearized forms for various control structures, as well as \texttt{yield}. The case
+numbers only intend to denote flow.
+
+\subsubsection{\texttt{if}}
+
+\begin{pygmented}{java}
+preamble;
+if (pred) {
+    consequent;
+} else {
+    alternate;
+}
+postamble;
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+case 0:
+    preamble;
+case 1:
+    if (pred) {
+        state = 2;
+        break;
+    } else {
+        state = 3;
+        break;
+    }
+case 2:
+    consequent;
+    state = 4;
+    break;
+case 3:
+    alternate;
+case 4:
+    postamble;
+\end{pygmented}
+
+\subsubsection{\texttt{for} (canonical loop)}
+
+\begin{pygmented}{java}
+preamble;
+for (;;) {
+    body;
+}
+postamble;
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+case 0:
+    preamble;
+case 1:
+    body;
+case 2:
+    state = 1;
+    break;
+case 3:
+    postamble;
+\end{pygmented}
+
+\subsubsection{\texttt{yield}}
+
+\begin{pygmented}{java}
+preamble;
+yield x;
+postamble;
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+case 0:
+    preamble;
+case 1:
+    state = 2;
+    current = x;
+    return true;
+case 2:
+    postamble;
+\end{pygmented}
+
+
+\end{document}
