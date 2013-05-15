@@ -9,7 +9,7 @@ import japa.parser.ast.visitor.ModifierVisitorAdapter;
  * The intra-loop jump transform turns all breaks and continues found inside a
  * loop into jumps.
  */
-class IntraLoopJumpTransform extends ModifierVisitorAdapter<LoopMarker> {
+class IntraLoopJumpTransform extends ModifierVisitorAdapter<Label> {
     Generator s;
 
     public IntraLoopJumpTransform(Generator s) {
@@ -17,7 +17,7 @@ class IntraLoopJumpTransform extends ModifierVisitorAdapter<LoopMarker> {
     }
 
     @Override
-    public Node visit(BreakStmt n, LoopMarker loop) {
+    public Node visit(BreakStmt n, Label loop) {
         if (n.getId() == null) {
             // This is probably a jump break or something.
             return n;
@@ -32,7 +32,7 @@ class IntraLoopJumpTransform extends ModifierVisitorAdapter<LoopMarker> {
     }
 
     @Override
-    public Node visit(ContinueStmt n, LoopMarker loop) {
+    public Node visit(ContinueStmt n, Label loop) {
         if (n.getId() == null) {
             return n;
         }

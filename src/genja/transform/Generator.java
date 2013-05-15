@@ -35,7 +35,7 @@ class Generator {
     /**
      * The current loop we're transforming.
      */
-    LoopMarker loop;
+    Label loop;
 
     /**
      * The current label we're in.
@@ -98,7 +98,7 @@ class Generator {
      * Enter a loop. This should be paired with exitLoop to generate the appropriate jump out.
      */
     void enterLoop() {
-        this.loop = new LoopMarker(this.states.size(), this.loop);
+        this.loop = new Label(null, this.states.size(), this.loop);
         this.newState();
     }
 
@@ -106,10 +106,10 @@ class Generator {
      * Exit a loop, rewriting the breaks and continues in the loop body.
      */
     void exitLoop() {
-        this.loop.endState = this.states.size();
+        this.loop.breakPoint = this.states.size();
 
         // We now want to rewrite all the continue and breaks using this loop marker.
-        for (int i = this.loop.startState; i < this.loop.endState; ++i) {
+        for (int i = this.loop.continuePoint; i < this.loop.breakPoint; ++i) {
             IntraLoopJumpTransform r = new IntraLoopJumpTransform(this);
             this.states.get(i).accept(r, this.loop);
         }
@@ -151,7 +151,7 @@ class Generator {
      * Enter a label context corresponding to the current state.
      */
     void enterLabel(String name) {
-        this.label = new Label(name, this.getCurrentState(), -1, this.label);
+        this.label = new Label(name, this.getCurrentState(), this.label);
         this.labels.put(name, this.label);
     }
 
