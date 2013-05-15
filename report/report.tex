@@ -2,8 +2,11 @@
 
 \usepackage{texments}
 \usepackage{algpseudocode}
+\usepackage[english]{babel}
 
 \usestyle{default}
+
+\hyphenation{li-ne-ar-i-za-tion}
 
 \begin{document}
 
@@ -102,7 +105,7 @@ mangling.
         \EndFor
 
         \ForAll{e $\in$ b's expressions}
-            \For{n $\in$ e's referenced names}
+            \ForAll{n $\in$ e's referenced names}
                 \State \Call{Prepend}{n's block's id, n}
             \EndFor
         \EndFor
