@@ -17,7 +17,7 @@ import japa.parser.ast.visitor.ModifierVisitorAdapter;
  * The scope mangling transform renames all variables to move them out of
  * variable scope into class scope.
  */
-public class ScopeManglingTransform extends ModifierVisitorAdapter<Map<String, TypedVariableDeclarator>> {
+public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, TypedVariableDeclarator>> {
     /**
      * The scope we're transforming.
      */
@@ -29,7 +29,7 @@ public class ScopeManglingTransform extends ModifierVisitorAdapter<Map<String, T
      */
     int nextBlock;
 
-    public ScopeManglingTransform() {
+    public ScopeMangleTransform() {
         this.block = null;
         this.nextBlock = 0;
     }

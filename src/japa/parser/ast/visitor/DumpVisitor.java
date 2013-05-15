@@ -802,9 +802,16 @@ public final class DumpVisitor implements VoidVisitor<Object> {
             case preDecrement:
                 printer.print("--");
                 break;
+            default:
         }
 
+        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
+            printer.print("(");
+        }
         n.getExpr().accept(this, arg);
+        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
+            printer.print(")");
+        }
 
         switch (n.getOperator()) {
             case posIncrement:
@@ -813,6 +820,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
             case posDecrement:
                 printer.print("--");
                 break;
+            default:
         }
     }
 
@@ -864,10 +872,10 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         }
 
         n.getType().accept(this, arg);
-        printer.print(" ");
         if (n.isGenerator()) {
             printer.print("*");
         }
+        printer.print(" ");
         printer.print(n.getName());
 
         printer.print("(");

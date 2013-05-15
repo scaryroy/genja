@@ -55,7 +55,7 @@ class Generator {
         this.loop = null;
         this.labels = new HashMap<String, TransitionPoint>();
 
-        this.forceNewState();
+        this.newState();
     }
 
     /**
@@ -80,21 +80,12 @@ class Generator {
     }
 
     /**
-     * Forcibly allocate a new state.
-     */
-    void forceNewState() {
-        List<Statement> stmts = new ArrayList<Statement>();
-        this.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("" + this.states.size()),
-                                            stmts));
-    }
-
-    /**
      * Allocate a new state.
      */
     void newState() {
-        if (this.getCurrentStateNode().getStmts().size() > 0) {
-            this.forceNewState();
-        }
+        List<Statement> stmts = new ArrayList<Statement>();
+        this.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("" + this.states.size()),
+                                            stmts));
     }
 
     /**
@@ -113,7 +104,7 @@ class Generator {
 
         // We now want to rewrite all the continue and breaks using this loop marker.
         for (int i = this.loop.startState; i < this.loop.endState; ++i) {
-            LoopBodyTransform r = new LoopBodyTransform(this);
+            IntraLoopJumpTransform r = new IntraLoopJumpTransform(this);
             this.states.get(i).accept(r, this.loop);
         }
 
@@ -162,7 +153,7 @@ class Generator {
      */
     public List<Statement> generate() {
         List<Statement> stmts = new ArrayList<Statement>();
-        stmts.add(LoopDesugaringTransform.makeLoopStmt(new SwitchStmt(STATE_VAR,
+        stmts.add(LoopDesugarTransform.makeLoopStmt(new SwitchStmt(STATE_VAR,
                                                                       this.states)));
         return stmts;
     }

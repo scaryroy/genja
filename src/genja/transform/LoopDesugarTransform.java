@@ -4,10 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import japa.parser.ast.Node;
+import japa.parser.ast.body.VariableDeclarator;
+import japa.parser.ast.expr.AssignExpr;
 import japa.parser.ast.expr.Expression;
+import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.expr.UnaryExpr;
+import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.BreakStmt;
+import japa.parser.ast.stmt.DoStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.ForStmt;
 import japa.parser.ast.stmt.IfStmt;
@@ -15,7 +20,7 @@ import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
-public class LoopDesugaringTransform extends ModifierVisitorAdapter<Void> {
+public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
     /**
      * Make a loop condition enforced.
      */
@@ -35,6 +40,18 @@ public class LoopDesugaringTransform extends ModifierVisitorAdapter<Void> {
     }
 
     @Override
+    public Node visit(DoStmt n, Void arg) {
+        super.visit(n, arg);
+
+        // Reword the loop.
+        List<Statement> stmts = new ArrayList<Statement>();
+        stmts.add(n.getBody());
+        stmts.add(makeLoopCondition(n.getCondition()));
+        BlockStmt b = new BlockStmt(stmts);
+        return makeLoopStmt(b);
+    }
+
+    @Override
     public Node visit(WhileStmt n, Void arg) {
         super.visit(n, arg);
 
@@ -42,7 +59,7 @@ public class LoopDesugaringTransform extends ModifierVisitorAdapter<Void> {
         List<Statement> stmts = new ArrayList<Statement>();
         stmts.add(makeLoopCondition(n.getCondition()));
         stmts.add(n.getBody());
-        BlockStmt b = new BlockStmt(-1, -1, -1, -1, stmts);
+        BlockStmt b = new BlockStmt(stmts);
         return makeLoopStmt(b);
     }
 
@@ -50,14 +67,26 @@ public class LoopDesugaringTransform extends ModifierVisitorAdapter<Void> {
     public Node visit(ForStmt n, Void arg) {
         super.visit(n, arg);
 
-        if (n.getInit() != null || n.getCompare() != null
-                || n.getUpdate() != null) {
+        if (n.getInit() != null || n.getCompare() != null ||
+            n.getUpdate() != null) {
             // Reword the loop.
             List<Statement> stmts = new ArrayList<Statement>();
 
             // We initialize in a scope above the actual loop body.
             for (Expression e : n.getInit()) {
                 stmts.add(new ExpressionStmt(e));
+
+                if (e.getClass().equals(VariableDeclarationExpr.class)) {
+                    VariableDeclarationExpr decl = (VariableDeclarationExpr) e;
+                    for (VariableDeclarator declarator : decl.getVars()) {
+                        if (declarator.getInit() != null) {
+                            stmts.add(new ExpressionStmt(
+                                    new AssignExpr(new NameExpr(declarator.getId().getName()),
+                                                   declarator.getInit(),
+                                                   AssignExpr.Operator.assign)));
+                        }
+                    }
+                }
             }
 
             // We move the check, body and update into a sub-block.
@@ -71,10 +100,9 @@ public class LoopDesugaringTransform extends ModifierVisitorAdapter<Void> {
                 substmts.add(new ExpressionStmt(e));
             }
 
-            stmts.add(new BlockStmt(substmts));
+            stmts.add(makeLoopStmt(new BlockStmt(substmts)));
 
-            BlockStmt b = new BlockStmt(stmts);
-            return makeLoopStmt(b);
+            return new BlockStmt(stmts);
         }
 
         return n;

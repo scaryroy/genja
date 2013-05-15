@@ -6,13 +6,13 @@ import japa.parser.ast.stmt.ContinueStmt;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
 /**
- * The loop body rewriter finds all the continues and breaks and replaces them with the correct
- * jumps.
+ * The intra-loop jump transform turns all breaks and continues found inside a
+ * loop into jumps.
  */
-class LoopBodyTransform extends ModifierVisitorAdapter<LoopMarker> {
+class IntraLoopJumpTransform extends ModifierVisitorAdapter<LoopMarker> {
     Generator s;
 
-    public LoopBodyTransform(Generator s) {
+    public IntraLoopJumpTransform(Generator s) {
         this.s = s;
     }
 

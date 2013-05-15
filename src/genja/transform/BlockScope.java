@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import japa.parser.ast.body.VariableDeclarator;
-import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.type.Type;
 
 /**
