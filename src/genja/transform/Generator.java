@@ -38,7 +38,7 @@ class Generator {
     LoopMarker loop;
 
     /**
-     * The curreent label we're in.
+     * The current label we're in.
      */
     Label label;
 
