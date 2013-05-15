@@ -8,7 +8,7 @@ import japa.parser.ast.visitor.ModifierVisitorAdapter;
 /**
  * The labeled break transformer rewrites all breaks with labels and replaces them with jumps.
  */
-class LabeledBreakTransform extends ModifierVisitorAdapter<Generator> {
+class LabeledJumpTransform extends ModifierVisitorAdapter<Generator> {
     @Override
     public Node visit(BreakStmt n, Generator s) {
         if (n.getId() != null) {

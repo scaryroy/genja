@@ -111,7 +111,7 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
         for (SwitchEntryStmt st : s.states) {
             // Transform labeled breaks.
-            st.accept(new LabeledBreakTransform(), s);
+            st.accept(new LabeledJumpTransform(), s);
         }
     }
 
