@@ -123,16 +123,13 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // Remember the state to add the deferred jump to.
         SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
 
-        // We force this state because the previous state could be empty.
         s.newState();
 
         List<Statement> stmts = entryStateNode.getStmts();
         stmts.add(Generator.generateDeferredJump(s.getCurrentState()));
-        if (n.getExpr() != null) {
-            stmts.add(new ExpressionStmt(new AssignExpr(Generator.CURRENT_VAR,
-                                                        n.getExpr(),
-                                                        AssignExpr.Operator.assign)));
-        }
+        stmts.add(new ExpressionStmt(new AssignExpr(Generator.CURRENT_VAR,
+                                                    n.getExpr(),
+                                                    AssignExpr.Operator.assign)));
         stmts.add(new ReturnStmt(new BooleanLiteralExpr(true)));
     }
 

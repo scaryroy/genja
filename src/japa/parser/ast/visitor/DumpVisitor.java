@@ -1313,10 +1313,8 @@ public final class DumpVisitor implements VoidVisitor<Object> {
 
     public void visit(YieldStmt n, Object arg) {
         printer.print("yield");
-        if (n.getExpr() != null) {
-            printer.print(" ");
-            n.getExpr().accept(this, arg);
-        }
+        printer.print(" ");
+        n.getExpr().accept(this, arg);
         printer.print(";");
     }
 

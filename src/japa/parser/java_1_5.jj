@@ -2800,7 +2800,7 @@ YieldStmt YieldStatement():
     int column;
 }
 {
-  "yield" {line=token.beginLine; column=token.beginColumn;} [ expr = Expression() ] ";"
+  "yield" {line=token.beginLine; column=token.beginColumn;} expr = Expression() ";"
   { return new YieldStmt(line, column, token.endLine, token.endColumn,expr); }
 }
 
