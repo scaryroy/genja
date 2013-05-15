@@ -17,7 +17,8 @@
 This report details the implementation of \emph{generators} in Java -- a specialized case of
 continuations that allow the execution of code to be paused within a method body at specific
 \emph{yield} points. It introduces \emph{linearization} as the primary technique for achieving
-this, with additional supplementary algorithms to transform code to adhere to the semantics of Java.
+this, with additional supplementary algorithms to transform code to adhere to the semantics of
+Java.
 
 \end{abstract}
 
@@ -25,8 +26,8 @@ this, with additional supplementary algorithms to transform code to adhere to th
 
 Generators are a language feature found in various modern languages. They enable sequential code to
 be paused at specific \emph{yield} points, making it useful for tasks such as iterating through a
-binary tree or creating lazy, infinite lists (\`a la Haskell) without having to explicitly keep track
-of where execution is.
+binary tree or creating lazy, infinite lists (\`a la Haskell) without having to explicitly keep
+track of where execution is.
 
 This implementation of generators extends Java syntax in two ways:
 
@@ -56,9 +57,7 @@ The first phase of generator transformation is loop desugaring. In this phase, w
 loops into a \emph{canonical form}, which is proposed to be the following:
 
 \begin{pygmented}{java}
-for (;;) {
-    // loop body
-}
+for (;;) { /* loop body */ }
 \end{pygmented}
 
 The canonical loop form represents an infinite loop -- however, the loop body may contain
@@ -157,38 +156,41 @@ selected to be linearized. In particular, any node containing a \texttt{yield}, 
 \label{algorithm:mark-for-linearizing}
 \end{figure}
 
-Once we have the nodes for linearization, we apply the linearization transforms to control flow
-described in appendix~\ref{appendix:linearizations}. States are in the form of \texttt{case}
-statements, which denote a state number that can be jumped to by setting the appropriate state
-number and \texttt{break}ing from the case.
+Once we have the nodes for linearization, we apply the straightforward linearization transforms to
+control flow as described in appendix~\ref{appendix:linearizations}. States are in the form of
+\texttt{case} statements, which denote a state number that can be jumped to by setting the
+appropriate state number and \texttt{break}ing from the case.
+
+For yield statements, we create a state for resuming execution when we resume the state machine. In
+the previous state, we create a deferred jump to the resume state, set the yielded value as the
+current value emitted by the state machine and then return \texttt{true} from the state machine to
+signify that the current value has changed.
 
 We keep track of two things during linearization: labels and loops. A loop can be considered an
 implicit label, but we eliminate them immediately at the end of a loop block linearization. A label
 refers to a statement that can be jumped to, but only from a child statement of the labeled
-statement.
+statement. With loop and label state, the following conditions apply to the linearization
+transformer:
 
-When the transformer encounters a label statement, we push the label onto the stack of labels with
-its name, as well as onto the map of labels indexed by string. The label will also have the start
-state associated with it, i.e. the point we will jump to if we \texttt{continue} to it. After we
-process the label's child statement, we know the state at which the statement ends so we set that
-as the point that we jump to if we attempt to \texttt{break} to it. During transformation of child
-\texttt{break} and \texttt{continue} statements, we verify that we only ever attempt to
+\begin{itemize}
+\item When the transformer encounters a label statement, we push the label onto the stack of labels
+with its name, as well as onto the map of labels indexed by string. The label will also have the
+start state associated with it, i.e. the point we will jump to if we \texttt{continue} to it. After
+we process the label's child statement, we know the state at which the statement ends so we set
+that as the point that we jump to if we attempt to \texttt{break} to it. During transformation of
+child \texttt{break} and \texttt{continue} statements, we verify that we only ever attempt to
 \texttt{break} or \texttt{continue} to labels found in parent node.
 
-When the transformer encounters a canonical loop, we repeat the same procedure we did with the
-labels with the exception that we do not add them to the map of labels, nor do we name the loop
+\item When the transformer encounters a canonical loop, we repeat the same procedure we did with
+the labels with the exception that we do not add them to the map of labels, nor do we name the loop
 labels. The transformer will then transform any label-less \texttt{break} and \texttt{continue}
 statements it finds into labeled ones, using the special label \texttt{.loop} to denote the current
 loop. After the transformer exits the canonical loop, it runs intra-loop jump resolution (see
 section~\ref{section:intra-loop-jump-resolution}).
+\end{itemize}
 
-When the transformer encounters yield statements, we create a state for resuming execution when we
-resume the state machine. In the previous state, we create a deferred jump to the resume state, set
-the yielded value as the current value emitted by the state machine and then return true from the
-state machine to signify that the current value has changed.
-
-Finally, after all the code has been linearized, we create a trap state that always deferred-jumps
-to itself and returns false. This ensures we don't execute random code in the state machine.
+After all the code has been linearized, we create a trap state that always deferred-jumps to itself
+and returns \texttt{false}. This ensures we don't execute random code in the state machine.
 
 In order to resolve jumps, we employ two techniques:
 
@@ -214,17 +216,19 @@ dereferenced.
 
 Linearization will have created a full state machine, which must then be wrapped in a
 \texttt{switch} statement wrapped in an infinite loop to facilitate jumping between states. This
-implementation provided supplies a runtime class, \texttt{genja.rt.Generator}, that wraps the
-generator to conform to Java's iterator interface. This class adopts slightly different semantics
-from standard iterators, due to the fact that generators are slightly different to Java iterators.
+implementation supplies a runtime class, \texttt{genja.rt.Generator}, that wraps the generator to
+conform to Java's iterator interface. This class adopts slightly different semantics from standard
+iterators, due to the fact that generators are slightly different to Java iterators:
 
-A \texttt{hasNext()} call on a \texttt{genja.rt.Generator} will resume the underlying state machine
-and set the last state machine success result if and only if the generator's stale flag is set to
-true. If the stale flag is not set, we simply return the last state machine success result.
+\begin{itemize}
+\item A \texttt{hasNext()} call on a \texttt{genja.rt.Generator} will resume the underlying state
+machine and set the last state machine success result if and only if the generator's stale flag is
+set to true. If the stale flag is not set, we simply return the last state machine success result.
 
-A \texttt{next()} call on a \texttt{genja.rt.Generator} will make a call to \texttt{hasNext()} if
-and only if the generator's stale flag is set to true. Otherwise, we return the current value
-yielded from the state machine and set the stale flag to true.
+\item A \texttt{next()} call on a \texttt{genja.rt.Generator} will make a call to
+\texttt{hasNext()} if and only if the generator's stale flag is set to true. Otherwise, we return
+the current value yielded from the state machine and set the stale flag to true.
+\end{itemize}
 
 \section{Known Issues}
 
@@ -277,8 +281,7 @@ becomes:
 
 \begin{pygmented}{java}
 for (;;) {
-    if (!pred) break;
-    body;
+    if (!pred) break; body;
 }
 \end{pygmented}
 
@@ -294,8 +297,7 @@ becomes:
 
 \begin{pygmented}{java}
 for (;;) {
-    body;
-    if (!pred) break;
+    body; if (!pred) break;
 }
 \end{pygmented}
 
@@ -313,8 +315,7 @@ becomes:
 {
     init;
     for (;;) {
-        if (!pred) break;
-        body;
+        if (!pred) break; body;
         update;
     }
 }
