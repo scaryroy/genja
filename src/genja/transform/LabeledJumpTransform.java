@@ -18,8 +18,6 @@ class LabeledJumpTransform extends ModifierVisitorAdapter<Generator> {
 
             if (s.labels.containsKey(n.getId())) {
                 // Generate a jump to another label, if the label is inside our state machine.
-                //
-                // TODO: Ensure we're not jumping somewhere really weird.
                 return Generator.generateJump(s.labels.get(n.getId()).breakPoint);
             }
         }

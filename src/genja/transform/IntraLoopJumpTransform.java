@@ -38,7 +38,6 @@ class IntraLoopJumpTransform extends ModifierVisitorAdapter<Label> {
         }
 
         if (!n.getId().equals(".loop")) {
-            // TODO: Ensure we're not jumping somewhere really weird.
             return Generator.generateJump(s.labels.get(n.getId()).continuePoint);
         }
 
