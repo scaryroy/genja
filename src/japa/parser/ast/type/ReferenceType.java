@@ -29,22 +29,31 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ReferenceType extends Type {
 
-    private final Type type;
+    private Type type;
 
-    private final int arrayCount;
+    private int arrayCount;
 
-    public ReferenceType(int line, int column, Type type, int arrayCount) {
-        super(line, column);
+    public ReferenceType() {
+    }
+
+    public ReferenceType(Type type) {
+        this.type = type;
+    }
+
+    public ReferenceType(Type type, int arrayCount) {
         this.type = type;
         this.arrayCount = arrayCount;
     }
 
-    public Type getType() {
-        return type;
+    public ReferenceType(int beginLine, int beginColumn, int endLine, int endColumn, Type type, int arrayCount) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.type = type;
+        this.arrayCount = arrayCount;
     }
 
-    public int getArrayCount() {
-        return arrayCount;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -52,9 +61,20 @@ public final class ReferenceType extends Type {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public int getArrayCount() {
+        return arrayCount;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setArrayCount(int arrayCount) {
+        this.arrayCount = arrayCount;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 
 }

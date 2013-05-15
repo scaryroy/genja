@@ -29,22 +29,27 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ArrayAccessExpr extends Expression {
 
-    private final Expression name;
+    private Expression name;
 
-    private final Expression index;
+    private Expression index;
 
-    public ArrayAccessExpr(int line, int column, Expression name, Expression index) {
-        super(line, column);
+    public ArrayAccessExpr() {
+    }
+
+    public ArrayAccessExpr(Expression name, Expression index) {
         this.name = name;
         this.index = index;
     }
 
-    public Expression getName() {
-        return name;
+    public ArrayAccessExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression name, Expression index) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.index = index;
     }
 
-    public Expression getIndex() {
-        return index;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -52,9 +57,20 @@ public final class ArrayAccessExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getIndex() {
+        return index;
+    }
+
+    public Expression getName() {
+        return name;
+    }
+
+    public void setIndex(Expression index) {
+        this.index = index;
+    }
+
+    public void setName(Expression name) {
+        this.name = name;
     }
 
 }

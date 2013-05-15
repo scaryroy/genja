@@ -31,22 +31,25 @@ import java.util.List;
  */
 public final class NormalAnnotationExpr extends AnnotationExpr {
 
-    private final NameExpr name;
+    private List<MemberValuePair> pairs;
 
-    private final List<MemberValuePair> pairs;
+    public NormalAnnotationExpr() {
+    }
 
-    public NormalAnnotationExpr(int line, int column, NameExpr name, List<MemberValuePair> pairs) {
-        super(line, column);
+    public NormalAnnotationExpr(NameExpr name, List<MemberValuePair> pairs) {
         this.name = name;
         this.pairs = pairs;
     }
 
-    public NameExpr getName() {
-        return name;
+    public NormalAnnotationExpr(int beginLine, int beginColumn, int endLine, int endColumn, NameExpr name, List<MemberValuePair> pairs) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.pairs = pairs;
     }
 
-    public List<MemberValuePair> getPairs() {
-        return pairs;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -54,9 +57,12 @@ public final class NormalAnnotationExpr extends AnnotationExpr {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public List<MemberValuePair> getPairs() {
+        return pairs;
+    }
+
+    public void setPairs(List<MemberValuePair> pairs) {
+        this.pairs = pairs;
     }
 
 }

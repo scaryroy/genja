@@ -29,18 +29,22 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class LongLiteralMinValueExpr extends LongLiteralExpr {
 
-    public LongLiteralMinValueExpr(int line, int column) {
-        super(line, column, "-9223372036854775808L");
+    public LongLiteralMinValueExpr() {
+        super(MIN_VALUE);
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public LongLiteralMinValueExpr(int beginLine, int beginColumn, int endLine, int endColumn) {
+        super(beginLine, beginColumn, endLine, endColumn, MIN_VALUE);
     }
 
     @Override
     public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
         return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
 }

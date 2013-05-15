@@ -29,15 +29,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class SuperExpr extends Expression {
 
-    private final Expression classExpr;
+    private Expression classExpr;
 
-    public SuperExpr(int line, int column, Expression classExpr) {
-        super(line, column);
+    public SuperExpr() {
+    }
+
+    public SuperExpr(Expression classExpr) {
         this.classExpr = classExpr;
     }
 
-    public Expression getClassExpr() {
-        return classExpr;
+    public SuperExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression classExpr) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.classExpr = classExpr;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,9 +53,12 @@ public final class SuperExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getClassExpr() {
+        return classExpr;
+    }
+
+    public void setClassExpr(Expression classExpr) {
+        this.classExpr = classExpr;
     }
 
 }

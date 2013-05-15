@@ -30,15 +30,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ThrowStmt extends Statement {
 
-    private final Expression expr;
+    private Expression expr;
 
-    public ThrowStmt(int line, int column, Expression expr) {
-        super(line, column);
+    public ThrowStmt() {
+    }
+
+    public ThrowStmt(Expression expr) {
         this.expr = expr;
     }
 
-    public Expression getExpr() {
-        return expr;
+    public ThrowStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression expr) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.expr = expr;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -46,8 +54,11 @@ public final class ThrowStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getExpr() {
+        return expr;
+    }
+
+    public void setExpr(Expression expr) {
+        this.expr = expr;
     }
 }

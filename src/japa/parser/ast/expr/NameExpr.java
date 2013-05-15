@@ -29,15 +29,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public class NameExpr extends Expression {
 
-    private final String name;
+    private String name;
 
-    public NameExpr(int line, int column, String name) {
-        super(line, column);
+    public NameExpr() {
+    }
+
+    public NameExpr(String name) {
         this.name = name;
     }
 
-    public String getName() {
-        return name;
+    public NameExpr(int beginLine, int beginColumn, int endLine, int endColumn, String name) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,9 +53,12 @@ public class NameExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public final String getName() {
+        return name;
+    }
+
+    public final void setName(String name) {
+        this.name = name;
     }
 
 }

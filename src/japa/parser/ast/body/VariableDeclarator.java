@@ -31,14 +31,36 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class VariableDeclarator extends Node {
 
-    private final VariableDeclaratorId id;
+    private VariableDeclaratorId id;
 
-    private final Expression init;
+    private Expression init;
 
-    public VariableDeclarator(int line, int column, VariableDeclaratorId id, Expression init) {
-        super(line, column);
+    public VariableDeclarator() {
+    }
+
+    public VariableDeclarator(VariableDeclaratorId id) {
+        this.id = id;
+    }
+
+    public VariableDeclarator(VariableDeclaratorId id, Expression init) {
         this.id = id;
         this.init = init;
+    }
+
+    public VariableDeclarator(int beginLine, int beginColumn, int endLine, int endColumn, VariableDeclaratorId id, Expression init) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.id = id;
+        this.init = init;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public VariableDeclaratorId getId() {
@@ -49,14 +71,12 @@ public final class VariableDeclarator extends Node {
         return init;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setId(VariableDeclaratorId id) {
+        this.id = id;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setInit(Expression init) {
+        this.init = init;
     }
 
 }

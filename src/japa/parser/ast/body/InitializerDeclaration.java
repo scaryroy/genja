@@ -30,22 +30,33 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class InitializerDeclaration extends BodyDeclaration {
 
-    private final boolean isStatic;
+    private boolean isStatic;
 
-    private final BlockStmt block;
+    private BlockStmt block;
 
-    public InitializerDeclaration(int line, int column, JavadocComment javaDoc, boolean isStatic, BlockStmt block) {
-        super(line, column, javaDoc);
+    public InitializerDeclaration() {
+    }
+
+    public InitializerDeclaration(boolean isStatic, BlockStmt block) {
         this.isStatic = isStatic;
         this.block = block;
     }
 
-    public boolean isStatic() {
-        return isStatic;
+    public InitializerDeclaration(JavadocComment javaDoc, boolean isStatic, BlockStmt block) {
+        super(null, javaDoc);
+        this.isStatic = isStatic;
+        this.block = block;
     }
 
-    public BlockStmt getBlock() {
-        return block;
+    public InitializerDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc, boolean isStatic, BlockStmt block) {
+        super(beginLine, beginColumn, endLine, endColumn, null, javaDoc);
+        this.isStatic = isStatic;
+        this.block = block;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -53,8 +64,19 @@ public final class InitializerDeclaration extends BodyDeclaration {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public BlockStmt getBlock() {
+        return block;
+    }
+
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    public void setBlock(BlockStmt block) {
+        this.block = block;
+    }
+
+    public void setStatic(boolean isStatic) {
+        this.isStatic = isStatic;
     }
 }

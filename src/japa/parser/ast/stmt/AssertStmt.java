@@ -30,14 +30,36 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class AssertStmt extends Statement {
 
-    private final Expression check;
+    private Expression check;
 
-    private final Expression msg;
+    private Expression msg;
 
-    public AssertStmt(int line, int column, Expression check, Expression msg) {
-        super(line, column);
+    public AssertStmt() {
+    }
+
+    public AssertStmt(Expression check) {
+        this.check = check;
+    }
+
+    public AssertStmt(Expression check, Expression msg) {
         this.check = check;
         this.msg = msg;
+    }
+
+    public AssertStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression check, Expression msg) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.check = check;
+        this.msg = msg;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public Expression getCheck() {
@@ -48,13 +70,11 @@ public final class AssertStmt extends Statement {
         return msg;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setCheck(Expression check) {
+        this.check = check;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setMessage(Expression msg) {
+        this.msg = msg;
     }
 }

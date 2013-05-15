@@ -30,22 +30,27 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class WhileStmt extends Statement {
 
-    private final Expression condition;
+    private Expression condition;
 
-    private final Statement body;
+    private Statement body;
 
-    public WhileStmt(int line, int column, Expression condition, Statement body) {
-        super(line, column);
+    public WhileStmt() {
+    }
+
+    public WhileStmt(Expression condition, Statement body) {
         this.condition = condition;
         this.body = body;
     }
 
-    public Expression getCondition() {
-        return condition;
+    public WhileStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression condition, Statement body) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.condition = condition;
+        this.body = body;
     }
 
-    public Statement getBody() {
-        return body;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -53,8 +58,19 @@ public final class WhileStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Statement getBody() {
+        return body;
+    }
+
+    public Expression getCondition() {
+        return condition;
+    }
+
+    public void setBody(Statement body) {
+        this.body = body;
+    }
+
+    public void setCondition(Expression condition) {
+        this.condition = condition;
     }
 }

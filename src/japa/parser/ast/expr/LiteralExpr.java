@@ -26,7 +26,10 @@ package japa.parser.ast.expr;
  */
 public abstract class LiteralExpr extends Expression {
 
-    public LiteralExpr(int line, int column) {
-        super(line, column);
+    public LiteralExpr() {
+    }
+
+    public LiteralExpr(int beginLine, int beginColumn, int endLine, int endColumn) {
+        super(beginLine, beginColumn, endLine, endColumn);
     }
 }

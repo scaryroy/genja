@@ -30,22 +30,27 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class SynchronizedStmt extends Statement {
 
-    private final Expression expr;
+    private Expression expr;
 
-    private final BlockStmt block;
+    private BlockStmt block;
 
-    public SynchronizedStmt(int line, int column, Expression expr, BlockStmt block) {
-        super(line, column);
+    public SynchronizedStmt() {
+    }
+
+    public SynchronizedStmt(Expression expr, BlockStmt block) {
         this.expr = expr;
         this.block = block;
     }
 
-    public Expression getExpr() {
-        return expr;
+    public SynchronizedStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression expr, BlockStmt block) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.expr = expr;
+        this.block = block;
     }
 
-    public BlockStmt getBlock() {
-        return block;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -53,9 +58,20 @@ public final class SynchronizedStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public BlockStmt getBlock() {
+        return block;
+    }
+
+    public Expression getExpr() {
+        return expr;
+    }
+
+    public void setBlock(BlockStmt block) {
+        this.block = block;
+    }
+
+    public void setExpr(Expression expr) {
+        this.expr = expr;
     }
 
 }

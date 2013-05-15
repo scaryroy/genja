@@ -29,15 +29,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public class StringLiteralExpr extends LiteralExpr {
 
-    protected final String value;
+    protected String value;
 
-    public StringLiteralExpr(int line, int column, String value) {
-        super(line, column);
+    public StringLiteralExpr() {
+    }
+
+    public StringLiteralExpr(String value) {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
+    public StringLiteralExpr(int beginLine, int beginColumn, int endLine, int endColumn, String value) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.value = value;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,8 +53,11 @@ public class StringLiteralExpr extends LiteralExpr {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public final String getValue() {
+        return value;
+    }
+
+    public final void setValue(String value) {
+        this.value = value;
     }
 }

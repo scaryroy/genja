@@ -1,54 +1,54 @@
 /*
+ * Copyright (C) 2007 Júlio Vilmar Gesser.
+ * 
+ * This file is part of Java 1.5 parser and Abstract Syntax Tree.
+ *
+ * Java 1.5 parser and Abstract Syntax Tree is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Java 1.5 parser and Abstract Syntax Tree is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Java 1.5 parser and Abstract Syntax Tree.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/*
  * Created on 22/11/2006
  */
 package japa.parser.ast.test;
 
-import japa.parser.JavaParser;
+import static org.junit.Assert.assertEquals;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.test.classes.DumperTestClass;
 import japa.parser.ast.test.classes.JavadocTestClass;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringBufferInputStream;
-
-import junit.framework.TestCase;
+import org.junit.Test;
 
 /**
  * @author Julio Vilmar Gesser
  */
-public class TestDumper extends TestCase {
+public class TestDumper {
 
-    private String readFile(String fileName) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-        try {
-            StringBuilder ret = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                ret.append(line);
-                ret.append("\n");
-            }
-            return ret.toString();
-        } finally {
-            reader.close();
-        }
-    }
-
+    @Test
     public void testDumpVisitor() throws Exception {
-        String source = readFile("./test/" + DumperTestClass.class.getName().replace('.', '/') + ".java");
-        CompilationUnit cu = JavaParser.parse(new StringBufferInputStream(source));
+        String source = Helper.readClass("./test", DumperTestClass.class);
+        CompilationUnit cu = Helper.parserString(source);
         assertEquals(source, cu.toString());
     }
 
+    @Test
     public void testJavadoc() throws Exception {
-        String source = readFile("./test/" + JavadocTestClass.class.getName().replace('.', '/') + ".java");
-        CompilationUnit cu = JavaParser.parse(new StringBufferInputStream(source));
+        String source = Helper.readClass("./test", JavadocTestClass.class);
+        CompilationUnit cu = Helper.parserString(source);
         assertEquals(source, cu.toString());
         assertEquals(19, cu.getComments().size());
     }
 
+    @Test
     public void testComments() throws Exception {
         final String source_with_comment = //
         "package japa.parser.javacc;\n" + //
@@ -84,7 +84,7 @@ public class TestDumper extends TestCase {
                 "}\n" + //
                 "";
 
-        CompilationUnit cu = JavaParser.parse(new StringBufferInputStream(source_with_comment));
+        CompilationUnit cu = Helper.parserString(source_with_comment);
         assertEquals(source_without_comment, cu.toString());
         assertEquals(6, cu.getComments().size());
     }

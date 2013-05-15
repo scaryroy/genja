@@ -29,15 +29,36 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class WildcardType extends Type {
 
-    private final ReferenceType ext;
+    private ReferenceType ext;
 
-    private final ReferenceType sup;
+    private ReferenceType sup;
 
-    public WildcardType(int line, int column, ReferenceType ext, ReferenceType sup) {
-        super(line, column);
-        assert ext == null || sup == null;
+    public WildcardType() {
+    }
+
+    public WildcardType(ReferenceType ext) {
+        this.ext = ext;
+    }
+
+    public WildcardType(ReferenceType ext, ReferenceType sup) {
         this.ext = ext;
         this.sup = sup;
+    }
+
+    public WildcardType(int beginLine, int beginColumn, int endLine, int endColumn, ReferenceType ext, ReferenceType sup) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.ext = ext;
+        this.sup = sup;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public ReferenceType getExtends() {
@@ -48,14 +69,12 @@ public final class WildcardType extends Type {
         return sup;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setExtends(ReferenceType ext) {
+        this.ext = ext;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setSuper(ReferenceType sup) {
+        this.sup = sup;
     }
 
 }

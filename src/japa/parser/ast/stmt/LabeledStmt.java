@@ -29,14 +29,32 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class LabeledStmt extends Statement {
 
-    private final String label;
+    private String label;
 
-    private final Statement stmt;
+    private Statement stmt;
 
-    public LabeledStmt(int line, int column, String label, Statement stmt) {
-        super(line, column);
+    public LabeledStmt() {
+    }
+
+    public LabeledStmt(String label, Statement stmt) {
         this.label = label;
         this.stmt = stmt;
+    }
+
+    public LabeledStmt(int beginLine, int beginColumn, int endLine, int endColumn, String label, Statement stmt) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.label = label;
+        this.stmt = stmt;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public String getLabel() {
@@ -47,13 +65,11 @@ public final class LabeledStmt extends Statement {
         return stmt;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setLabel(String label) {
+        this.label = label;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setStmt(Statement stmt) {
+        this.stmt = stmt;
     }
 }

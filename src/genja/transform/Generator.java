@@ -1,6 +1,7 @@
 package genja.transform;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,26 +21,21 @@ import japa.parser.ast.stmt.SwitchStmt;
  * The generator class contains the state required to create a generator, as well as utility
  * methods for populating its state.
  */
-public class Generator {
+class Generator {
     /**
      * The variable name containing the current state number.
      */
-    public static final NameExpr STATE_VAR = new NameExpr(-1, -1, "$state");
+    public static final NameExpr STATE_VAR = new NameExpr("$state");
 
     /**
      * The variable name containing the currently yielded value.
      */
-    public static final NameExpr CURRENT_VAR = new NameExpr(-1, -1, "$current");
+    public static final NameExpr CURRENT_VAR = new NameExpr("$current");
 
     /**
      * The current loop we're transforming.
      */
     LoopMarker loop;
-
-    /**
-     * The scope we're transforming.
-     */
-    BlockScope block;
 
     /**
      * The states.
@@ -52,21 +48,14 @@ public class Generator {
     Map<String, TransitionPoint> labels;
 
     /**
-     * The next scope number for allocation. This gets reset to 0 when we enter a new scope, and
-     * incremented when we exit one.
-     */
-    int nextBlock;
-
-    /**
      * Create a new generator.
      */
     public Generator() {
         this.states = new ArrayList<SwitchEntryStmt>();
         this.loop = null;
-        this.block = null;
-        this.nextBlock = 0;
+        this.labels = new HashMap<String, TransitionPoint>();
 
-        this.newState();
+        this.forceNewState();
     }
 
     /**
@@ -74,9 +63,9 @@ public class Generator {
      * the jump.
      */
     public static Statement generateDeferredJump(int state) {
-        return new ExpressionStmt(-1, -1, new AssignExpr(-1, -1, STATE_VAR,
-                                                         new IntegerLiteralExpr(-1, -1, "" + state),
-                                                         AssignExpr.Operator.assign));
+        return new ExpressionStmt(new AssignExpr(STATE_VAR,
+                                                 new IntegerLiteralExpr("" + state),
+                                                 AssignExpr.Operator.assign));
     }
 
     /**
@@ -85,49 +74,27 @@ public class Generator {
     public static Statement generateJump(int state) {
         List<Statement> stmts = new ArrayList<Statement>();
         stmts.add(generateDeferredJump(state));
-        stmts.add(new BreakStmt(-1, -1, null));
-        return new IfStmt(-1, -1, new BooleanLiteralExpr(-1, -1, true),
-                          new BlockStmt(-1, -1, -1, -1, stmts), null);
+        stmts.add(new BreakStmt(null));
+        return new IfStmt(new BooleanLiteralExpr(true),
+                          new BlockStmt(stmts), null);
     }
 
     /**
-     * Get the scope-mangled prefix for the current scope.
+     * Forcibly allocate a new state.
      */
-    String getScopePrefix() {
-        StringBuilder sb = new StringBuilder();
-        BlockScope c = this.block;
-        while (c != null) {
-            sb.append("scope" + c.num + "$");
-            c = c.back;
-        }
-
-        return sb.toString();
+    void forceNewState() {
+        List<Statement> stmts = new ArrayList<Statement>();
+        this.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("" + this.states.size()),
+                                            stmts));
     }
 
     /**
      * Allocate a new state.
      */
     void newState() {
-        List<Statement> stmts = new ArrayList<Statement>();
-        this.states.add(new SwitchEntryStmt(-1, -1,
-                                            new IntegerLiteralExpr(-1, -1, "" + this.states.size()),
-                                            stmts));
-    }
-
-    /**
-     * Enter a scope. This should be paired with exitBlock.
-     */
-    void enterBlock() {
-        this.block = new BlockScope(this.nextBlock, this.block);
-        this.nextBlock = 0;
-    }
-
-    /**
-     * Exit a scope.
-     */
-    void exitBlock() {
-        this.nextBlock = this.block.num + 1;
-        this.block = this.block.back;
+        if (this.getCurrentStateNode().getStmts().size() > 0) {
+            this.forceNewState();
+        }
     }
 
     /**
@@ -195,8 +162,8 @@ public class Generator {
      */
     public List<Statement> generate() {
         List<Statement> stmts = new ArrayList<Statement>();
-        stmts.add(GeneratorTransform.makeLoopStmt(new SwitchStmt(-1, -1, STATE_VAR,
-                                                                this.states)));
+        stmts.add(LoopDesugaringTransform.makeLoopStmt(new SwitchStmt(STATE_VAR,
+                                                                      this.states)));
         return stmts;
     }
 }

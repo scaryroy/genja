@@ -31,15 +31,23 @@ import java.util.List;
  */
 public final class BlockStmt extends Statement {
 
-    private final List<Statement> stmts;
+    private List<Statement> stmts;
+
+    public BlockStmt() {
+    }
+
+    public BlockStmt(List<Statement> stmts) {
+        this.stmts = stmts;
+    }
 
     public BlockStmt(int beginLine, int beginColumn, int endLine, int endColumn, List<Statement> stmts) {
         super(beginLine, beginColumn, endLine, endColumn);
         this.stmts = stmts;
     }
 
-    public List<Statement> getStmts() {
-        return stmts;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -47,8 +55,11 @@ public final class BlockStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public List<Statement> getStmts() {
+        return stmts;
+    }
+
+    public void setStmts(List<Statement> stmts) {
+        this.stmts = stmts;
     }
 }

@@ -28,26 +28,47 @@ import japa.parser.ast.visitor.VoidVisitor;
 import java.util.List;
 
 /**
+ * <p>
+ * This class represents the declaration of a genetics argument.
+ * </p>
+ * The TypeParameter is constructed following the syntax:<br>
+ * <code>
+ * <table>
+ * <tr valign=baseline>
+ *   <td align=right>TypeParameter</td>
+ *   <td align=center>::=</td>
+ *   <td align=left>
+ *       &lt;IDENTIFIER&gt; ( "extends" {@link ClassOrInterfaceType} ( "&" {@link ClassOrInterfaceType} )* )?
+ *   </td>
+ * </tr>
+ * </table> 
+ * </code>
+ * 
  * @author Julio Vilmar Gesser
  */
 public final class TypeParameter extends Node {
 
-    private final String name;
+    private String name;
 
-    private final List<ClassOrInterfaceType> typeBound;
+    private List<ClassOrInterfaceType> typeBound;
 
-    public TypeParameter(int line, int column, String name, List<ClassOrInterfaceType> typeBound) {
-        super(line, column);
+    public TypeParameter() {
+    }
+
+    public TypeParameter(String name, List<ClassOrInterfaceType> typeBound) {
         this.name = name;
         this.typeBound = typeBound;
     }
 
-    public String getName() {
-        return name;
+    public TypeParameter(int beginLine, int beginColumn, int endLine, int endColumn, String name, List<ClassOrInterfaceType> typeBound) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.typeBound = typeBound;
     }
 
-    public List<ClassOrInterfaceType> getTypeBound() {
-        return typeBound;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -55,9 +76,43 @@ public final class TypeParameter extends Node {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    /**
+     * Return the name of the paramenter.
+     * 
+     * @return the name of the paramenter
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the list of {@link ClassOrInterfaceType} that this parameter
+     * extends. Return <code>null</code> null if there are no type.
+     * 
+     * @return list of types that this paramente extends or <code>null</code>
+     */
+    public List<ClassOrInterfaceType> getTypeBound() {
+        return typeBound;
+    }
+
+    /**
+     * Sets the name of this type parameter.
+     * 
+     * @param name
+     *            the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Sets the list o types.
+     * 
+     * @param typeBound
+     *            the typeBound to set
+     */
+    public void setTypeBound(List<ClassOrInterfaceType> typeBound) {
+        this.typeBound = typeBound;
     }
 
 }

@@ -31,21 +31,36 @@ import java.util.List;
  */
 public final class TryStmt extends Statement {
 
-    private final BlockStmt tryBlock;
+    private BlockStmt tryBlock;
 
-    private final List<CatchClause> catchs;
+    private List<CatchClause> catchs;
 
-    private final BlockStmt finallyBlock;
+    private BlockStmt finallyBlock;
 
-    public TryStmt(int line, int column, BlockStmt tryBlock, List<CatchClause> catchs, BlockStmt finallyBlock) {
-        super(line, column);
+    public TryStmt() {
+    }
+
+    public TryStmt(BlockStmt tryBlock, List<CatchClause> catchs, BlockStmt finallyBlock) {
         this.tryBlock = tryBlock;
         this.catchs = catchs;
         this.finallyBlock = finallyBlock;
     }
 
-    public BlockStmt getTryBlock() {
-        return tryBlock;
+    public TryStmt(int beginLine, int beginColumn, int endLine, int endColumn, BlockStmt tryBlock, List<CatchClause> catchs, BlockStmt finallyBlock) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.tryBlock = tryBlock;
+        this.catchs = catchs;
+        this.finallyBlock = finallyBlock;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public List<CatchClause> getCatchs() {
@@ -56,13 +71,19 @@ public final class TryStmt extends Statement {
         return finallyBlock;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public BlockStmt getTryBlock() {
+        return tryBlock;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setCatchs(List<CatchClause> catchs) {
+        this.catchs = catchs;
+    }
+
+    public void setFinallyBlock(BlockStmt finallyBlock) {
+        this.finallyBlock = finallyBlock;
+    }
+
+    public void setTryBlock(BlockStmt tryBlock) {
+        this.tryBlock = tryBlock;
     }
 }

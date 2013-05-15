@@ -33,15 +33,23 @@ public final class PrimitiveType extends Type {
         Boolean, Char, Byte, Short, Int, Long, Float, Double
     }
 
-    private final Primitive type;
+    private Primitive type;
 
-    public PrimitiveType(int line, int column, Primitive type) {
-        super(line, column);
+    public PrimitiveType() {
+    }
+
+    public PrimitiveType(Primitive type) {
         this.type = type;
     }
 
-    public Primitive getType() {
-        return type;
+    public PrimitiveType(int beginLine, int beginColumn, int endLine, int endColumn, Primitive type) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.type = type;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -49,9 +57,12 @@ public final class PrimitiveType extends Type {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Primitive getType() {
+        return type;
+    }
+
+    public void setType(Primitive type) {
+        this.type = type;
     }
 
 }

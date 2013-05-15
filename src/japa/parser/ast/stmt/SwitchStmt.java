@@ -32,22 +32,27 @@ import java.util.List;
  */
 public final class SwitchStmt extends Statement {
 
-    private final Expression selector;
+    private Expression selector;
 
-    private final List<SwitchEntryStmt> entries;
+    private List<SwitchEntryStmt> entries;
 
-    public SwitchStmt(int line, int column, Expression selector, List<SwitchEntryStmt> entries) {
-        super(line, column);
+    public SwitchStmt() {
+    }
+
+    public SwitchStmt(Expression selector, List<SwitchEntryStmt> entries) {
         this.selector = selector;
         this.entries = entries;
     }
 
-    public Expression getSelector() {
-        return selector;
+    public SwitchStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression selector, List<SwitchEntryStmt> entries) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.selector = selector;
+        this.entries = entries;
     }
 
-    public List<SwitchEntryStmt> getEntries() {
-        return entries;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -55,8 +60,19 @@ public final class SwitchStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public List<SwitchEntryStmt> getEntries() {
+        return entries;
+    }
+
+    public Expression getSelector() {
+        return selector;
+    }
+
+    public void setEntries(List<SwitchEntryStmt> entries) {
+        this.entries = entries;
+    }
+
+    public void setSelector(Expression selector) {
+        this.selector = selector;
     }
 }

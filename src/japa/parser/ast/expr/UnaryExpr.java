@@ -40,14 +40,32 @@ public final class UnaryExpr extends Expression {
         posDecrement, // --
     }
 
-    private final Expression expr;
+    private Expression expr;
 
-    private final Operator op;
+    private Operator op;
 
-    public UnaryExpr(int line, int column, Expression expr, Operator op) {
-        super(line, column);
+    public UnaryExpr() {
+    }
+
+    public UnaryExpr(Expression expr, Operator op) {
         this.expr = expr;
         this.op = op;
+    }
+
+    public UnaryExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression expr, Operator op) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.expr = expr;
+        this.op = op;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public Expression getExpr() {
@@ -58,14 +76,12 @@ public final class UnaryExpr extends Expression {
         return op;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setExpr(Expression expr) {
+        this.expr = expr;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setOperator(Operator op) {
+        this.op = op;
     }
 
 }

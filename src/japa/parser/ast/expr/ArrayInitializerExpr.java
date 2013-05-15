@@ -31,15 +31,23 @@ import java.util.List;
  */
 public final class ArrayInitializerExpr extends Expression {
 
-    private final List<Expression> values;
+    private List<Expression> values;
 
-    public ArrayInitializerExpr(int line, int column, List<Expression> values) {
-        super(line, column);
+    public ArrayInitializerExpr() {
+    }
+
+    public ArrayInitializerExpr(List<Expression> values) {
         this.values = values;
     }
 
-    public List<Expression> getValues() {
-        return values;
+    public ArrayInitializerExpr(int beginLine, int beginColumn, int endLine, int endColumn, List<Expression> values) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.values = values;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -47,9 +55,12 @@ public final class ArrayInitializerExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public List<Expression> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Expression> values) {
+        this.values = values;
     }
 
 }

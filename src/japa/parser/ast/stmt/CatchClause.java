@@ -31,22 +31,27 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class CatchClause extends Node {
 
-    private final Parameter except;
+    private Parameter except;
 
-    private final BlockStmt catchBlock;
+    private BlockStmt catchBlock;
 
-    public CatchClause(int line, int column, Parameter except, BlockStmt catchBlock) {
-        super(line, column);
+    public CatchClause() {
+    }
+
+    public CatchClause(Parameter except, BlockStmt catchBlock) {
         this.except = except;
         this.catchBlock = catchBlock;
     }
 
-    public Parameter getExcept() {
-        return except;
+    public CatchClause(int beginLine, int beginColumn, int endLine, int endColumn, Parameter except, BlockStmt catchBlock) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.except = except;
+        this.catchBlock = catchBlock;
     }
 
-    public BlockStmt getCatchBlock() {
-        return catchBlock;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -54,8 +59,19 @@ public final class CatchClause extends Node {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public BlockStmt getCatchBlock() {
+        return catchBlock;
+    }
+
+    public Parameter getExcept() {
+        return except;
+    }
+
+    public void setCatchBlock(BlockStmt catchBlock) {
+        this.catchBlock = catchBlock;
+    }
+
+    public void setExcept(Parameter except) {
+        this.except = except;
     }
 }

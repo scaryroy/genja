@@ -3,13 +3,10 @@ package genja.transform;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.tools.internal.ws.wsdl.document.jaxws.Exception;
-
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.ImportDeclaration;
 import japa.parser.ast.LineComment;
-import japa.parser.ast.Node;
 import japa.parser.ast.PackageDeclaration;
 import japa.parser.ast.TypeParameter;
 import japa.parser.ast.body.AnnotationDeclaration;
@@ -57,7 +54,6 @@ import japa.parser.ast.expr.QualifiedNameExpr;
 import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.expr.StringLiteralExpr;
 import japa.parser.ast.expr.SuperExpr;
-import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -91,25 +87,7 @@ import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
 import japa.parser.ast.visitor.VoidVisitor;
 
-public class GeneratorTransform implements VoidVisitor<Generator> {
-    /**
-     * Make a loop condition enforced.
-     */
-    private static Statement makeLoopCondition(Expression cond) {
-        if (cond == null) return null;
-
-        return new IfStmt(-1, -1, new UnaryExpr(-1, -1, cond, UnaryExpr.Operator.not),
-                          new BreakStmt(-1, -1, null), null);
-    }
-
-    /**
-     * Make an infinite loop expression. This is the only kind of loop compatible with
-     * transformLoop.
-     */
-    public static Statement makeLoopStmt(Statement body) {
-        return new ForStmt(-1, -1, null, null, null, body);
-    }
-
+class GeneratorTransform implements VoidVisitor<Generator> {
     /**
      * Transform a method declaration.
      */
@@ -119,6 +97,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
             throw new UnsupportedOperationException("cannot transform non-generator");
         }
 
+        // Annotate ALL the nodes!
         n.accept(new NodeAnnotator(), null);
 
         for (Statement stmt : n.getBody().getStmts()) {
@@ -127,6 +106,11 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
             } else {
                 s.addStatement(stmt);
             }
+        }
+
+        for (SwitchEntryStmt st : s.states) {
+            // Transform labeled breaks.
+            st.accept(new LabeledBreakTransform(), s);
         }
     }
 
@@ -138,20 +122,15 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         // Remember the state to add the deferred jump to.
         SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
 
-        s.newState();
+        // We force this state because the previous state could be empty.
+        s.forceNewState();
 
         List<Statement> stmts = entryStateNode.getStmts();
         stmts.add(Generator.generateDeferredJump(s.getCurrentState()));
-        stmts.add(new ExpressionStmt(-1, -1, new AssignExpr(-1, -1,
-                                                            Generator.CURRENT_VAR,
-                                                            n.getExpr(),
-                                                            AssignExpr.Operator.assign)));
-        stmts.add(new ReturnStmt(-1, -1, new BooleanLiteralExpr(-1, -1, true)));
-    }
-
-    @Override
-    public void visit(Node n, Generator arg) {
-        throw new IllegalStateException(n.getClass().getName());
+        stmts.add(new ExpressionStmt(new AssignExpr(Generator.CURRENT_VAR,
+                                                    n.getExpr(),
+                                                    AssignExpr.Operator.assign)));
+        stmts.add(new ReturnStmt(new BooleanLiteralExpr(true)));
     }
 
     @Override
@@ -400,11 +379,6 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
     }
 
     @Override
-    public void visit(SuperMemberAccessExpr n, Generator arg) {
-        throw new UnsupportedOperationException("not generator transformable");
-    }
-
-    @Override
     public void visit(ThisExpr n, Generator arg) {
         throw new UnsupportedOperationException("not generator transformable");
     }
@@ -483,7 +457,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(BreakStmt n, Generator arg) {
         if (n.getId() == null) {
-            arg.addStatement(new BreakStmt(-1, -1, ".loop"));
+            arg.addStatement(new BreakStmt(".loop"));
             return;
         }
         arg.addStatement(n);
@@ -501,7 +475,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(ContinueStmt n, Generator arg) {
         if (n.getId() == null) {
-            arg.addStatement(new ContinueStmt(-1, -1, ".loop"));
+            arg.addStatement(new ContinueStmt(".loop"));
             return;
         }
         arg.addStatement(n);
@@ -546,7 +520,6 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(BlockStmt n, Generator s) {
         if (n.getStmts() == null) return;
-        s.enterBlock();
 
         // Either add statements from the block into the transformer state, or process them because
         // we have yields in them.
@@ -558,7 +531,6 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
             }
         }
     
-        s.exitBlock();
     }
 
     @Override
@@ -578,7 +550,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
     
         // Create a node for the consequent.
-        s.newState();
+        s.forceNewState();
         SwitchEntryStmt consequentNode = s.getCurrentStateNode();
     
         // Create the consequent jump.
@@ -598,7 +570,7 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
         consequentNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
 
         // Add the if into the node we remembered.
-        entryStateNode.getStmts().add(new IfStmt(-1, -1, n.getCondition(),
+        entryStateNode.getStmts().add(new IfStmt(n.getCondition(),
                                                  consequentJump,
                                                  alternateJump == null ? null : alternateJump));
 
@@ -609,56 +581,13 @@ public class GeneratorTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(WhileStmt n, Generator s) {
-        // Reword the loop.
-        List<Statement> stmts = new ArrayList<Statement>();
-        stmts.add(makeLoopCondition(n.getCondition()));
-        stmts.add(n.getBody());
-        BlockStmt b = new BlockStmt(-1, -1, -1, -1, stmts);
-        Statement loop = makeLoopStmt(b);
-
-        // Loop needs reannotation.
-        loop.accept(new NodeAnnotator(), null);
-        loop.accept(this, s);
+        throw new UnsupportedOperationException("not generator transformable");
     }
 
     @Override
     public void visit(ForStmt n, Generator s) {
         if (n.getInit() != null || n.getCompare() != null || n.getUpdate() != null) {
-            // Reword the loop.
-            List<Statement> stmts = new ArrayList<Statement>();
-    
-            // We initialize in a scope above the actual loop body.
-            for (Expression e : n.getInit()) {
-                stmts.add(new ExpressionStmt(e.getBeginLine(), e.getBeginColumn(), e));
-            }
-    
-            // We move the check, body and update into a sub-block.
-            List<Statement> substmts = new ArrayList<Statement>();
-            Statement loopCond = makeLoopCondition(n.getCompare());
-            if (loopCond != null) substmts.add(loopCond);
-            substmts.add(n.getBody());
-    
-            for (Expression e : n.getUpdate()) {
-                substmts.add(new ExpressionStmt(e.getBeginLine(), e.getBeginColumn(), e));
-            }
-    
-            stmts.add(new BlockStmt(n.getBody().getBeginLine(),
-                                    n.getBody().getBeginColumn(),
-                                    n.getBody().getEndLine(),
-                                    n.getBody().getEndColumn(),
-                                    substmts));
-    
-            BlockStmt b = new BlockStmt(n.getBody().getBeginLine(),
-                                        n.getBody().getBeginColumn(),
-                                        n.getBody().getEndLine(),
-                                        n.getBody().getEndColumn(),
-                                        stmts);
-            Statement loop = makeLoopStmt(b);
-
-            // Loop needs reannotation.
-            loop.accept(new NodeAnnotator(), null);
-            loop.accept(this, s);
-            return;
+            throw new UnsupportedOperationException("not generator transformable");
         }
     
         // We have an infinite loop, which is in the correct form for us to transform.

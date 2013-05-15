@@ -29,15 +29,24 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class QualifiedNameExpr extends NameExpr {
 
-    private final NameExpr qualifier;
+    private NameExpr qualifier;
 
-    public QualifiedNameExpr(int line, int column, NameExpr scope, String name) {
-        super(line, column, name);
+    public QualifiedNameExpr() {
+    }
+
+    public QualifiedNameExpr(NameExpr scope, String name) {
+        super(name);
         this.qualifier = scope;
     }
 
-    public NameExpr getQualifier() {
-        return qualifier;
+    public QualifiedNameExpr(int beginLine, int beginColumn, int endLine, int endColumn, NameExpr scope, String name) {
+        super(beginLine, beginColumn, endLine, endColumn, name);
+        this.qualifier = scope;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,9 +54,12 @@ public final class QualifiedNameExpr extends NameExpr {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public NameExpr getQualifier() {
+        return qualifier;
+    }
+
+    public void setQualifier(NameExpr qualifier) {
+        this.qualifier = qualifier;
     }
 
 }

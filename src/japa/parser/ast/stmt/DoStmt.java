@@ -30,14 +30,32 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class DoStmt extends Statement {
 
-    private final Statement body;
+    private Statement body;
 
-    private final Expression condition;
+    private Expression condition;
 
-    public DoStmt(int line, int column, Statement body, Expression condition) {
-        super(line, column);
+    public DoStmt() {
+    }
+
+    public DoStmt(Statement body, Expression condition) {
         this.body = body;
         this.condition = condition;
+    }
+
+    public DoStmt(int beginLine, int beginColumn, int endLine, int endColumn, Statement body, Expression condition) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.body = body;
+        this.condition = condition;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public Statement getBody() {
@@ -48,13 +66,11 @@ public final class DoStmt extends Statement {
         return condition;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setBody(Statement body) {
+        this.body = body;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setCondition(Expression condition) {
+        this.condition = condition;
     }
 }

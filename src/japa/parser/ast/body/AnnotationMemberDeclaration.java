@@ -34,43 +34,43 @@ import java.util.List;
  */
 public final class AnnotationMemberDeclaration extends BodyDeclaration {
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<AnnotationExpr> annotations;
+    private Type type;
 
-    private final Type type;
+    private String name;
 
-    private final String name;
+    private Expression defaultValue;
 
-    private final Expression defaultValue;
+    public AnnotationMemberDeclaration() {
+    }
 
-    public AnnotationMemberDeclaration(int line, int column, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, String name, Expression defaultValue) {
-        super(line, column, javaDoc);
+    public AnnotationMemberDeclaration(int modifiers, Type type, String name, Expression defaultValue) {
         this.modifiers = modifiers;
-        this.annotations = annotations;
         this.type = type;
         this.name = name;
         this.defaultValue = defaultValue;
     }
 
-    public int getModifiers() {
-        return modifiers;
+    public AnnotationMemberDeclaration(JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, String name, Expression defaultValue) {
+        super(annotations, javaDoc);
+        this.modifiers = modifiers;
+        this.type = type;
+        this.name = name;
+        this.defaultValue = defaultValue;
     }
 
-    public List<AnnotationExpr> getAnnotations() {
-        return annotations;
+    public AnnotationMemberDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, String name, Expression defaultValue) {
+        super(beginLine, beginColumn, endLine, endColumn, annotations, javaDoc);
+        this.modifiers = modifiers;
+        this.type = type;
+        this.name = name;
+        this.defaultValue = defaultValue;
     }
 
-    public Type getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Expression getDefaultValue() {
-        return defaultValue;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -78,8 +78,41 @@ public final class AnnotationMemberDeclaration extends BodyDeclaration {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getDefaultValue() {
+        return defaultValue;
+    }
+
+    /**
+     * Return the modifiers of this member declaration.
+     * 
+     * @see ModifierSet
+     * @return modifiers
+     */
+    public int getModifiers() {
+        return modifiers;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setDefaultValue(Expression defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 }

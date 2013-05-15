@@ -29,15 +29,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class BreakStmt extends Statement {
 
-    private final String id;
+    private String id;
 
-    public BreakStmt(int line, int column, String id) {
-        super(line, column);
+    public BreakStmt() {
+    }
+
+    public BreakStmt(String id) {
         this.id = id;
     }
 
-    public String getId() {
-        return id;
+    public BreakStmt(int beginLine, int beginColumn, int endLine, int endColumn, String id) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.id = id;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,8 +53,11 @@ public final class BreakStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

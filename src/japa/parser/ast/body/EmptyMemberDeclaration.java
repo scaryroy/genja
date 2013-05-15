@@ -29,17 +29,24 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class EmptyMemberDeclaration extends BodyDeclaration {
 
-    public EmptyMemberDeclaration(int line, int column, JavadocComment javaDoc) {
-        super(line, column, javaDoc);
+    public EmptyMemberDeclaration() {
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public EmptyMemberDeclaration(JavadocComment javaDoc) {
+        super(null, javaDoc);
+    }
+
+    public EmptyMemberDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc) {
+        super(beginLine, beginColumn, endLine, endColumn, null, javaDoc);
     }
 
     @Override
     public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
         return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 }

@@ -30,14 +30,32 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class MemberValuePair extends Node {
 
-    private final String name;
+    private String name;
 
-    private final Expression value;
+    private Expression value;
 
-    public MemberValuePair(int line, int column, String name, Expression value) {
-        super(line, column);
+    public MemberValuePair() {
+    }
+
+    public MemberValuePair(String name, Expression value) {
         this.name = name;
         this.value = value;
+    }
+
+    public MemberValuePair(int beginLine, int beginColumn, int endLine, int endColumn, String name, Expression value) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.value = value;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public String getName() {
@@ -48,14 +66,12 @@ public final class MemberValuePair extends Node {
         return value;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setValue(Expression value) {
+        this.value = value;
     }
 
 }

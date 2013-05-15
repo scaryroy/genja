@@ -32,52 +32,50 @@ import java.util.List;
  */
 public final class ArrayCreationExpr extends Expression {
 
-    private final Type type;
+    private Type type;
 
-    private final List<Type> typeArgs;
+    private int arrayCount;
 
-    private final int arrayCount;
+    private ArrayInitializerExpr initializer;
 
-    private final ArrayInitializerExpr initializer;
+    private List<Expression> dimensions;
 
-    private final List<Expression> dimensions;
+    public ArrayCreationExpr() {
+    }
 
-    public ArrayCreationExpr(int line, int column, Type type, List<Type> typeArgs, int arrayCount, ArrayInitializerExpr initializer) {
-        super(line, column);
+    public ArrayCreationExpr(Type type, int arrayCount, ArrayInitializerExpr initializer) {
         this.type = type;
-        this.typeArgs = typeArgs;
         this.arrayCount = arrayCount;
         this.initializer = initializer;
         this.dimensions = null;
     }
 
-    public Type getType() {
-        return type;
-    }
-
-    public List<Type> getTypeArgs() {
-        return typeArgs;
-    }
-
-    public int getArrayCount() {
-        return arrayCount;
-    }
-
-    public ArrayInitializerExpr getInitializer() {
-        return initializer;
-    }
-
-    public List<Expression> getDimensions() {
-        return dimensions;
-    }
-
-    public ArrayCreationExpr(int line, int column, Type type, List<Type> typeArgs, List<Expression> dimensions, int arrayCount) {
-        super(line, column);
+    public ArrayCreationExpr(int beginLine, int beginColumn, int endLine, int endColumn, Type type, int arrayCount, ArrayInitializerExpr initializer) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.type = type;
-        this.typeArgs = typeArgs;
+        this.arrayCount = arrayCount;
+        this.initializer = initializer;
+        this.dimensions = null;
+    }
+
+    public ArrayCreationExpr(Type type, List<Expression> dimensions, int arrayCount) {
+        this.type = type;
         this.arrayCount = arrayCount;
         this.dimensions = dimensions;
         this.initializer = null;
+    }
+
+    public ArrayCreationExpr(int beginLine, int beginColumn, int endLine, int endColumn, Type type, List<Expression> dimensions, int arrayCount) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.type = type;
+        this.arrayCount = arrayCount;
+        this.dimensions = dimensions;
+        this.initializer = null;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -85,9 +83,36 @@ public final class ArrayCreationExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public int getArrayCount() {
+        return arrayCount;
+    }
+
+    public List<Expression> getDimensions() {
+        return dimensions;
+    }
+
+    public ArrayInitializerExpr getInitializer() {
+        return initializer;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setArrayCount(int arrayCount) {
+        this.arrayCount = arrayCount;
+    }
+
+    public void setDimensions(List<Expression> dimensions) {
+        this.dimensions = dimensions;
+    }
+
+    public void setInitializer(ArrayInitializerExpr initializer) {
+        this.initializer = initializer;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 
 }

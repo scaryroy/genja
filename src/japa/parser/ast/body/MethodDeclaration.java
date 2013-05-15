@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Júlio Vilmar Gesser.
- * 
+ *
  * This file is part of Java 1.5 parser and Abstract Syntax Tree.
  *
  * Java 1.5 parser and Abstract Syntax Tree is free software: you can redistribute it and/or modify
@@ -36,54 +36,92 @@ import java.util.List;
  */
 public final class MethodDeclaration extends BodyDeclaration {
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<AnnotationExpr> annotations;
+    private List<TypeParameter> typeParameters;
 
-    private final List<TypeParameter> typeParameters;
+    private Type type;
 
-    private final Type type;
+    private String name;
 
-    private final String name;
+    private List<Parameter> parameters;
 
-    private final List<Parameter> parameters;
+    private int arrayCount;
 
-    private final int arrayCount;
+    private List<NameExpr> throws_;
 
-    private final boolean generator;
+    private BlockStmt body;
 
-	private final List<NameExpr> throws_;
+    private boolean generator;
 
-    private final BlockStmt body;
+    public MethodDeclaration() {
+    }
 
-    public MethodDeclaration(int line, int column, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, List<TypeParameter> typeParameters, Type type, String name, List<Parameter> parameters, int arrayCount, List<NameExpr> throws_, boolean isGenerator, BlockStmt block) {
-        super(line, column, javaDoc);
+    public MethodDeclaration(int modifiers, Type type, String name) {
         this.modifiers = modifiers;
-        this.annotations = annotations;
+        this.type = type;
+        this.name = name;
+    }
+
+    public MethodDeclaration(int modifiers, Type type, String name, List<Parameter> parameters) {
+        this.modifiers = modifiers;
+        this.type = type;
+        this.name = name;
+        this.parameters = parameters;
+    }
+
+    public MethodDeclaration(JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, List<TypeParameter> typeParameters, Type type, String name, List<Parameter> parameters, int arrayCount, List<NameExpr> throws_, boolean generator, BlockStmt block) {
+        super(annotations, javaDoc);
+        this.modifiers = modifiers;
         this.typeParameters = typeParameters;
         this.type = type;
         this.name = name;
         this.parameters = parameters;
         this.arrayCount = arrayCount;
         this.throws_ = throws_;
-        this.generator = isGenerator;
+        this.generator = generator;
         this.body = block;
     }
 
+    public MethodDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, List<TypeParameter> typeParameters, Type type, String name, List<Parameter> parameters, int arrayCount, List<NameExpr> throws_, boolean generator, BlockStmt block) {
+        super(beginLine, beginColumn, endLine, endColumn, annotations, javaDoc);
+        this.modifiers = modifiers;
+        this.typeParameters = typeParameters;
+        this.type = type;
+        this.name = name;
+        this.parameters = parameters;
+        this.arrayCount = arrayCount;
+        this.throws_ = throws_;
+        this.generator = generator;
+        this.body = block;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    public int getArrayCount() {
+        return arrayCount;
+    }
+
+    public BlockStmt getBody() {
+        return body;
+    }
+
+    /**
+     * Return the modifiers of this member declaration.
+     *
+     * @see ModifierSet
+     * @return modifiers
+     */
     public int getModifiers() {
         return modifiers;
-    }
-
-    public List<AnnotationExpr> getAnnotations() {
-        return annotations;
-    }
-
-    public List<TypeParameter> getTypeParameters() {
-        return typeParameters;
-    }
-
-    public Type getType() {
-        return type;
     }
 
     public String getName() {
@@ -94,29 +132,55 @@ public final class MethodDeclaration extends BodyDeclaration {
         return parameters;
     }
 
-    public int getArrayCount() {
-        return arrayCount;
-    }
-
     public List<NameExpr> getThrows() {
         return throws_;
     }
 
     public boolean isGenerator() {
-		return generator;
-	}
-
-    public BlockStmt getBody() {
-        return body;
+        return generator;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public Type getType() {
+        return type;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public List<TypeParameter> getTypeParameters() {
+        return typeParameters;
+    }
+
+    public void setArrayCount(int arrayCount) {
+        this.arrayCount = arrayCount;
+    }
+
+    public void setBody(BlockStmt body) {
+        this.body = body;
+    }
+
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setParameters(List<Parameter> parameters) {
+        this.parameters = parameters;
+    }
+
+    public void setThrows(List<NameExpr> throws_) {
+        this.throws_ = throws_;
+    }
+
+    public void setGenerator(boolean generator) {
+        this.generator = generator;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public void setTypeParameters(List<TypeParameter> typeParameters) {
+        this.typeParameters = typeParameters;
     }
 }

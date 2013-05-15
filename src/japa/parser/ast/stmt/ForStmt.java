@@ -32,36 +32,35 @@ import java.util.List;
  */
 public final class ForStmt extends Statement {
 
-    private final List<Expression> init;
+    private List<Expression> init;
 
-    private final Expression compare;
+    private Expression compare;
 
-    private final List<Expression> update;
+    private List<Expression> update;
 
-    private final Statement body;
+    private Statement body;
 
-    public ForStmt(int line, int column, List<Expression> init, Expression compare, List<Expression> update, Statement body) {
-        super(line, column);
+    public ForStmt() {
+    }
+
+    public ForStmt(List<Expression> init, Expression compare, List<Expression> update, Statement body) {
         this.compare = compare;
         this.init = init;
         this.update = update;
         this.body = body;
     }
 
-    public List<Expression> getInit() {
-        return init;
+    public ForStmt(int beginLine, int beginColumn, int endLine, int endColumn, List<Expression> init, Expression compare, List<Expression> update, Statement body) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.compare = compare;
+        this.init = init;
+        this.update = update;
+        this.body = body;
     }
 
-    public Expression getCompare() {
-        return compare;
-    }
-
-    public List<Expression> getUpdate() {
-        return update;
-    }
-
-    public Statement getBody() {
-        return body;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -69,8 +68,35 @@ public final class ForStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Statement getBody() {
+        return body;
+    }
+
+    public Expression getCompare() {
+        return compare;
+    }
+
+    public List<Expression> getInit() {
+        return init;
+    }
+
+    public List<Expression> getUpdate() {
+        return update;
+    }
+
+    public void setBody(Statement body) {
+        this.body = body;
+    }
+
+    public void setCompare(Expression compare) {
+        this.compare = compare;
+    }
+
+    public void setInit(List<Expression> init) {
+        this.init = init;
+    }
+
+    public void setUpdate(List<Expression> update) {
+        this.update = update;
     }
 }

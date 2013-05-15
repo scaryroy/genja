@@ -30,22 +30,26 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class VariableDeclaratorId extends Node {
 
-    private final String name;
+    private String name;
 
-    private final int arrayCount;
+    private int arrayCount;
 
-    public VariableDeclaratorId(int line, int column, String name, int arrayCount) {
-        super(line, column);
+    public VariableDeclaratorId() {
+    }
+
+    public VariableDeclaratorId(String name) {
+        this.name = name;
+    }
+
+    public VariableDeclaratorId(int beginLine, int beginColumn, int endLine, int endColumn, String name, int arrayCount) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.name = name;
         this.arrayCount = arrayCount;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getArrayCount() {
-        return arrayCount;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -53,9 +57,20 @@ public final class VariableDeclaratorId extends Node {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public int getArrayCount() {
+        return arrayCount;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setArrayCount(int arrayCount) {
+        this.arrayCount = arrayCount;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

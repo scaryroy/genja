@@ -51,29 +51,31 @@ public final class BinaryExpr extends Expression {
         remainder, // %
     }
 
-    private final Expression left;
+    private Expression left;
 
-    private final Expression right;
+    private Expression right;
 
-    private final Operator op;
+    private Operator op;
 
-    public BinaryExpr(int line, int column, Expression left, Expression right, Operator op) {
-        super(line, column);
+    public BinaryExpr() {
+    }
+
+    public BinaryExpr(Expression left, Expression right, Operator op) {
         this.left = left;
         this.right = right;
         this.op = op;
     }
 
-    public Expression getLeft() {
-        return left;
+    public BinaryExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression left, Expression right, Operator op) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.left = left;
+        this.right = right;
+        this.op = op;
     }
 
-    public Expression getRight() {
-        return right;
-    }
-
-    public Operator getOperator() {
-        return op;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -81,9 +83,28 @@ public final class BinaryExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Operator getOperator() {
+        return op;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+
+    public void setLeft(Expression left) {
+        this.left = left;
+    }
+
+    public void setOperator(Operator op) {
+        this.op = op;
+    }
+
+    public void setRight(Expression right) {
+        this.right = right;
     }
 
 }

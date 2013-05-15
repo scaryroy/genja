@@ -34,23 +34,50 @@ import java.util.List;
  */
 public final class ObjectCreationExpr extends Expression {
 
-    private final Expression scope;
+    private Expression scope;
 
-    private final ClassOrInterfaceType type;
+    private ClassOrInterfaceType type;
 
-    private final List<Type> typeArgs;
+    private List<Type> typeArgs;
 
-    private final List<Expression> args;
+    private List<Expression> args;
 
-    private final List<BodyDeclaration> anonymousClassBody;
+    private List<BodyDeclaration> anonymousClassBody;
 
-    public ObjectCreationExpr(int line, int column, Expression scope, ClassOrInterfaceType type, List<Type> typeArgs, List<Expression> args, List<BodyDeclaration> anonymousBody) {
-        super(line, column);
+    public ObjectCreationExpr() {
+    }
+
+    public ObjectCreationExpr(Expression scope, ClassOrInterfaceType type, List<Expression> args) {
+        this.scope = scope;
+        this.type = type;
+        this.args = args;
+    }
+
+    public ObjectCreationExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression scope, ClassOrInterfaceType type, List<Type> typeArgs, List<Expression> args, List<BodyDeclaration> anonymousBody) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.scope = scope;
         this.type = type;
         this.typeArgs = typeArgs;
         this.args = args;
         this.anonymousClassBody = anonymousBody;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    public List<BodyDeclaration> getAnonymousClassBody() {
+        return anonymousClassBody;
+    }
+
+    public List<Expression> getArgs() {
+        return args;
     }
 
     public Expression getScope() {
@@ -65,22 +92,24 @@ public final class ObjectCreationExpr extends Expression {
         return typeArgs;
     }
 
-    public List<Expression> getArgs() {
-        return args;
+    public void setAnonymousClassBody(List<BodyDeclaration> anonymousClassBody) {
+        this.anonymousClassBody = anonymousClassBody;
     }
 
-    public List<BodyDeclaration> getAnonymousClassBody() {
-        return anonymousClassBody;
+    public void setArgs(List<Expression> args) {
+        this.args = args;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setScope(Expression scope) {
+        this.scope = scope;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setType(ClassOrInterfaceType type) {
+        this.type = type;
+    }
+
+    public void setTypeArgs(List<Type> typeArgs) {
+        this.typeArgs = typeArgs;
     }
 
 }

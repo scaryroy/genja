@@ -31,29 +31,31 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ForeachStmt extends Statement {
 
-    private final VariableDeclarationExpr var;
+    private VariableDeclarationExpr var;
 
-    private final Expression iterable;
+    private Expression iterable;
 
-    private final Statement body;
+    private Statement body;
 
-    public ForeachStmt(int line, int column, VariableDeclarationExpr var, Expression iterable, Statement body) {
-        super(line, column);
+    public ForeachStmt() {
+    }
+
+    public ForeachStmt(VariableDeclarationExpr var, Expression iterable, Statement body) {
         this.var = var;
         this.iterable = iterable;
         this.body = body;
     }
 
-    public VariableDeclarationExpr getVariable() {
-        return var;
+    public ForeachStmt(int beginLine, int beginColumn, int endLine, int endColumn, VariableDeclarationExpr var, Expression iterable, Statement body) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.var = var;
+        this.iterable = iterable;
+        this.body = body;
     }
 
-    public Expression getIterable() {
-        return iterable;
-    }
-
-    public Statement getBody() {
-        return body;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -61,8 +63,27 @@ public final class ForeachStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Statement getBody() {
+        return body;
+    }
+
+    public Expression getIterable() {
+        return iterable;
+    }
+
+    public VariableDeclarationExpr getVariable() {
+        return var;
+    }
+
+    public void setBody(Statement body) {
+        this.body = body;
+    }
+
+    public void setIterable(Expression iterable) {
+        this.iterable = iterable;
+    }
+
+    public void setVariable(VariableDeclarationExpr var) {
+        this.var = var;
     }
 }

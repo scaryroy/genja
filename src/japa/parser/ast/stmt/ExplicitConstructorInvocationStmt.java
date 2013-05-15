@@ -33,20 +33,47 @@ import java.util.List;
  */
 public final class ExplicitConstructorInvocationStmt extends Statement {
 
-    private final List<Type> typeArgs;
+    private List<Type> typeArgs;
 
-    private final boolean isThis;
+    private boolean isThis;
 
-    private final Expression expr;
+    private Expression expr;
 
-    private final List<Expression> args;
+    private List<Expression> args;
 
-    public ExplicitConstructorInvocationStmt(int line, int column, List<Type> typeArgs, boolean isThis, Expression expr, List<Expression> args) {
-        super(line, column);
+    public ExplicitConstructorInvocationStmt() {
+    }
+
+    public ExplicitConstructorInvocationStmt(boolean isThis, Expression expr, List<Expression> args) {
+        this.isThis = isThis;
+        this.expr = expr;
+        this.args = args;
+    }
+
+    public ExplicitConstructorInvocationStmt(int beginLine, int beginColumn, int endLine, int endColumn, List<Type> typeArgs, boolean isThis, Expression expr, List<Expression> args) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.typeArgs = typeArgs;
         this.isThis = isThis;
         this.expr = expr;
         this.args = args;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    public List<Expression> getArgs() {
+        return args;
+    }
+
+    public Expression getExpr() {
+        return expr;
     }
 
     public List<Type> getTypeArgs() {
@@ -57,21 +84,19 @@ public final class ExplicitConstructorInvocationStmt extends Statement {
         return isThis;
     }
 
-    public Expression getExpr() {
-        return expr;
+    public void setArgs(List<Expression> args) {
+        this.args = args;
     }
 
-    public List<Expression> getArgs() {
-        return args;
+    public void setExpr(Expression expr) {
+        this.expr = expr;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setThis(boolean isThis) {
+        this.isThis = isThis;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setTypeArgs(List<Type> typeArgs) {
+        this.typeArgs = typeArgs;
     }
 }

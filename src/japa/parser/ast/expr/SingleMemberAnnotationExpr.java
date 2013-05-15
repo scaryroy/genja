@@ -29,22 +29,25 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class SingleMemberAnnotationExpr extends AnnotationExpr {
 
-    private final NameExpr name;
+    private Expression memberValue;
 
-    private final Expression memberValue;
+    public SingleMemberAnnotationExpr() {
+    }
 
-    public SingleMemberAnnotationExpr(int line, int column, NameExpr name, Expression memberValue) {
-        super(line, column);
+    public SingleMemberAnnotationExpr(NameExpr name, Expression memberValue) {
         this.name = name;
         this.memberValue = memberValue;
     }
 
-    public NameExpr getName() {
-        return name;
+    public SingleMemberAnnotationExpr(int beginLine, int beginColumn, int endLine, int endColumn, NameExpr name, Expression memberValue) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.memberValue = memberValue;
     }
 
-    public Expression getMemberValue() {
-        return memberValue;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -52,9 +55,12 @@ public final class SingleMemberAnnotationExpr extends AnnotationExpr {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getMemberValue() {
+        return memberValue;
+    }
+
+    public void setMemberValue(Expression memberValue) {
+        this.memberValue = memberValue;
     }
 
 }

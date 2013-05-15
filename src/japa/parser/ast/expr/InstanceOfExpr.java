@@ -30,14 +30,32 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class InstanceOfExpr extends Expression {
 
-    private final Expression expr;
+    private Expression expr;
 
-    private final Type type;
+    private Type type;
 
-    public InstanceOfExpr(int line, int column, Expression expr, Type type) {
-        super(line, column);
+    public InstanceOfExpr() {
+    }
+
+    public InstanceOfExpr(Expression expr, Type type) {
         this.expr = expr;
         this.type = type;
+    }
+
+    public InstanceOfExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression expr, Type type) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.expr = expr;
+        this.type = type;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public Expression getExpr() {
@@ -48,14 +66,12 @@ public final class InstanceOfExpr extends Expression {
         return type;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setExpr(Expression expr) {
+        this.expr = expr;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setType(Type type) {
+        this.type = type;
     }
 
 }

@@ -29,17 +29,24 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class EmptyTypeDeclaration extends TypeDeclaration {
 
-    public EmptyTypeDeclaration(int line, int column, JavadocComment javaDoc) {
-        super(line, column, javaDoc, null, 0, null);
+    public EmptyTypeDeclaration() {
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public EmptyTypeDeclaration(JavadocComment javaDoc) {
+        super(null, javaDoc, 0, null, null);
+    }
+
+    public EmptyTypeDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc) {
+        super(beginLine, beginColumn, endLine, endColumn, null, javaDoc, 0, null, null);
     }
 
     @Override
     public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
         return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 }

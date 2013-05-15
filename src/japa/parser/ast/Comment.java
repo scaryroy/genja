@@ -21,20 +21,48 @@
  */
 package japa.parser.ast;
 
+import japa.parser.ast.body.JavadocComment;
+
 /**
+ * Abstract class for all AST nodes that represent comments.
+ * 
+ * @see BlockComment
+ * @see LineComment
+ * @see JavadocComment
  * @author Julio Vilmar Gesser
  */
 public abstract class Comment extends Node {
 
-    private final String content;
+    private String content;
+
+    public Comment() {
+    }
+
+    public Comment(String content) {
+        this.content = content;
+    }
 
     public Comment(int beginLine, int beginColumn, int endLine, int endColumn, String content) {
         super(beginLine, beginColumn, endLine, endColumn);
         this.content = content;
     }
 
-    public String getContent() {
+    /**
+     * Return the text of the comment.
+     * 
+     * @return text of the comment
+     */
+    public final String getContent() {
         return content;
     }
 
+    /**
+     * Sets the text of the comment.
+     * 
+     * @param content
+     *            the text of the comment to set
+     */
+    public void setContent(String content) {
+        this.content = content;
+    }
 }

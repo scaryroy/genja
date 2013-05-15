@@ -21,6 +21,7 @@
  */
 package japa.parser.ast.expr;
 
+import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.type.Type;
 import japa.parser.ast.visitor.GenericVisitor;
@@ -33,28 +34,58 @@ import java.util.List;
  */
 public final class VariableDeclarationExpr extends Expression {
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<AnnotationExpr> annotations;
+    private List<AnnotationExpr> annotations;
 
-    private final Type type;
+    private Type type;
 
-    private final List<VariableDeclarator> vars;
+    private List<VariableDeclarator> vars;
 
-    public VariableDeclarationExpr(int line, int column, int modifiers, List<AnnotationExpr> annotations, Type type, List<VariableDeclarator> vars) {
-        super(line, column);
+    public VariableDeclarationExpr() {
+    }
+
+    public VariableDeclarationExpr(Type type, List<VariableDeclarator> vars) {
+        this.type = type;
+        this.vars = vars;
+    }
+
+    public VariableDeclarationExpr(int modifiers, Type type, List<VariableDeclarator> vars) {
+        this.modifiers = modifiers;
+        this.type = type;
+        this.vars = vars;
+    }
+
+    public VariableDeclarationExpr(int beginLine, int beginColumn, int endLine, int endColumn, int modifiers, List<AnnotationExpr> annotations, Type type, List<VariableDeclarator> vars) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.modifiers = modifiers;
         this.annotations = annotations;
         this.type = type;
         this.vars = vars;
     }
 
-    public int getModifiers() {
-        return modifiers;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public List<AnnotationExpr> getAnnotations() {
         return annotations;
+    }
+
+    /**
+     * Return the modifiers of this variable declaration.
+     * 
+     * @see ModifierSet
+     * @return modifiers
+     */
+    public int getModifiers() {
+        return modifiers;
     }
 
     public Type getType() {
@@ -65,13 +96,19 @@ public final class VariableDeclarationExpr extends Expression {
         return vars;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setAnnotations(List<AnnotationExpr> annotations) {
+        this.annotations = annotations;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public void setVars(List<VariableDeclarator> vars) {
+        this.vars = vars;
     }
 }

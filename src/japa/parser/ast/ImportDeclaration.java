@@ -26,33 +26,52 @@ import japa.parser.ast.visitor.GenericVisitor;
 import japa.parser.ast.visitor.VoidVisitor;
 
 /**
+ * <p>
+ * This class represents a import declaration. Imports are optional for the
+ * {@link CompilationUnit}.
+ * </p>
+ * The ImportDeclaration is constructed following the syntax:<br>
+ * <code>
+ * <table>
+ * <tr valign=baseline>
+ *   <td align=right>ImportDeclaration</td>
+ *   <td align=center>::=</td>
+ *   <td align=left>
+ *       "import" ( "static" )? {@link NameExpr} ( "." "*" )? ";"
+ *   </td>
+ * </tr>
+ * </table> 
+ * </code>
+ * 
  * @author Julio Vilmar Gesser
  */
 public final class ImportDeclaration extends Node {
 
-    private final NameExpr name;
+    private NameExpr name;
 
-    private final boolean isStatic;
+    private boolean static_;
 
-    private final boolean isAsterisk;
+    private boolean asterisk;
 
-    public ImportDeclaration(int line, int column, NameExpr name, boolean isStatic, boolean isAsterisk) {
-        super(line, column);
+    public ImportDeclaration() {
+    }
+
+    public ImportDeclaration(NameExpr name, boolean isStatic, boolean isAsterisk) {
         this.name = name;
-        this.isStatic = isStatic;
-        this.isAsterisk = isAsterisk;
+        this.static_ = isStatic;
+        this.asterisk = isAsterisk;
     }
 
-    public NameExpr getName() {
-        return name;
+    public ImportDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, NameExpr name, boolean isStatic, boolean isAsterisk) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.name = name;
+        this.static_ = isStatic;
+        this.asterisk = isAsterisk;
     }
 
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public boolean isAsterisk() {
-        return isAsterisk;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -60,9 +79,63 @@ public final class ImportDeclaration extends Node {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    /**
+     * Retrieves the name of the import.
+     * 
+     * @return the name of the import
+     */
+    public NameExpr getName() {
+        return name;
+    }
+
+    /**
+     * Return if the import ends with "*".
+     * 
+     * @return <code>true</code> if the import ends with "*", <code>false</code>
+     *         otherwise
+     */
+    public boolean isAsterisk() {
+        return asterisk;
+    }
+
+    /**
+     * Return if the import is static.
+     * 
+     * @return <code>true</code> if the import is static, <code>false</code>
+     *         otherwise
+     */
+    public boolean isStatic() {
+        return static_;
+    }
+
+    /**
+     * Sets if this import is asterisk.
+     * 
+     * @param asterisk
+     *            <code>true</code> if this import is asterisk
+     */
+    public void setAsterisk(boolean asterisk) {
+        this.asterisk = asterisk;
+    }
+
+    /**
+     * Sets the name this import.
+     * 
+     * @param name
+     *            the name to set
+     */
+    public void setName(NameExpr name) {
+        this.name = name;
+    }
+
+    /**
+     * Sets if this import is static.
+     * 
+     * @param static_
+     *            <code>true</code> if this import is static
+     */
+    public void setStatic(boolean static_) {
+        this.static_ = static_;
     }
 
 }

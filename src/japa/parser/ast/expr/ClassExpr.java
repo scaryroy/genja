@@ -30,15 +30,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ClassExpr extends Expression {
 
-    private final Type type;
+    private Type type;
 
-    public ClassExpr(int line, int column, Type type) {
-        super(line, column);
+    public ClassExpr() {
+    }
+
+    public ClassExpr(Type type) {
         this.type = type;
     }
 
-    public Type getType() {
-        return type;
+    public ClassExpr(int beginLine, int beginColumn, int endLine, int endColumn, Type type) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.type = type;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -46,9 +54,12 @@ public final class ClassExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 
 }

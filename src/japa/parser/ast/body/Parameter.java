@@ -34,18 +34,32 @@ import java.util.List;
  */
 public final class Parameter extends Node {
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<AnnotationExpr> annotations;
+    private List<AnnotationExpr> annotations;
 
-    private final Type type;
+    private Type type;
 
-    private final boolean isVarArgs;
+    private boolean isVarArgs;
 
-    private final VariableDeclaratorId id;
+    private VariableDeclaratorId id;
 
-    public Parameter(int line, int column, int modifiers, List<AnnotationExpr> annotations, Type type, boolean isVarArgs, VariableDeclaratorId id) {
-        super(line, column);
+    public Parameter() {
+    }
+
+    public Parameter(Type type, VariableDeclaratorId id) {
+        this.type = type;
+        this.id = id;
+    }
+
+    public Parameter(int modifiers, Type type, VariableDeclaratorId id) {
+        this.modifiers = modifiers;
+        this.type = type;
+        this.id = id;
+    }
+
+    public Parameter(int beginLine, int beginColumn, int endLine, int endColumn, int modifiers, List<AnnotationExpr> annotations, Type type, boolean isVarArgs, VariableDeclaratorId id) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.modifiers = modifiers;
         this.annotations = annotations;
         this.type = type;
@@ -53,12 +67,32 @@ public final class Parameter extends Node {
         this.id = id;
     }
 
-    public int getModifiers() {
-        return modifiers;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public List<AnnotationExpr> getAnnotations() {
         return annotations;
+    }
+
+    public VariableDeclaratorId getId() {
+        return id;
+    }
+
+    /**
+     * Return the modifiers of this parameter declaration.
+     * 
+     * @see ModifierSet
+     * @return modifiers
+     */
+    public int getModifiers() {
+        return modifiers;
     }
 
     public Type getType() {
@@ -69,17 +103,23 @@ public final class Parameter extends Node {
         return isVarArgs;
     }
 
-    public VariableDeclaratorId getId() {
-        return id;
+    public void setAnnotations(List<AnnotationExpr> annotations) {
+        this.annotations = annotations;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setId(VariableDeclaratorId id) {
+        this.id = id;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public void setVarArgs(boolean isVarArgs) {
+        this.isVarArgs = isVarArgs;
     }
 }

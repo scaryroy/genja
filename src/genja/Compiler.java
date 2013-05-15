@@ -1,35 +1,27 @@
 package genja;
 
-import genja.transform.Generator;
-import genja.transform.GeneratorTransform;
+import genja.transform.IteratorTransform;
 import japa.parser.JavaParser;
 import japa.parser.ast.CompilationUnit;
+import japa.parser.ast.Node;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.visitor.DumpVisitor;
-import japa.parser.ast.visitor.GenericVisitorAdapter;
+import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
-public class Compiler extends GenericVisitorAdapter<Void, Void> {
-
+public class Compiler extends ModifierVisitorAdapter<Void> {
     @Override
-    public Void visit(MethodDeclaration n, Void arg) {
+    public Node visit(MethodDeclaration n, Void arg) {
         if (!n.isGenerator()) {
-            super.visit(n, arg);
+            return super.visit(n, arg);
         }
-
-        Generator gen = new Generator();
-        GeneratorTransform gt = new GeneratorTransform();
-        n.accept(gt, gen);
-        
-        System.out.println(gen.generate().get(0).toString());
-        
-        return null;
+        return n.accept(new IteratorTransform(), null);
     }
 
     public static void main(String[] args) throws Exception {
         CompilationUnit cu = JavaParser.parse(System.in);
+        cu.accept(new Compiler(), null);
         DumpVisitor d = new DumpVisitor();
         cu.accept(d, null);
-        cu.accept(new Compiler(), null);
         System.out.println(d.getSource());
     }
 }

@@ -29,15 +29,23 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class BooleanLiteralExpr extends LiteralExpr {
 
-    private final Boolean value;
+    private boolean value;
 
-    public BooleanLiteralExpr(int line, int column, Boolean value) {
-        super(line, column);
+    public BooleanLiteralExpr() {
+    }
+
+    public BooleanLiteralExpr(boolean value) {
         this.value = value;
     }
 
-    public Boolean getValue() {
-        return value;
+    public BooleanLiteralExpr(int beginLine, int beginColumn, int endLine, int endColumn, boolean value) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.value = value;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -45,8 +53,11 @@ public final class BooleanLiteralExpr extends LiteralExpr {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public boolean getValue() {
+        return value;
+    }
+
+    public void setValue(boolean value) {
+        this.value = value;
     }
 }

@@ -32,20 +32,52 @@ import java.util.List;
  */
 public final class MethodCallExpr extends Expression {
 
-    private final Expression scope;
+    private Expression scope;
 
-    private final List<Type> typeArgs;
+    private List<Type> typeArgs;
 
-    private final String name;
+    private String name;
 
-    private final List<Expression> args;
+    private List<Expression> args;
 
-    public MethodCallExpr(int line, int column, Expression scope, List<Type> typeArgs, String name, List<Expression> args) {
-        super(line, column);
+    public MethodCallExpr() {
+    }
+
+    public MethodCallExpr(Expression scope, String name) {
+        this.scope = scope;
+        this.name = name;
+    }
+
+    public MethodCallExpr(Expression scope, String name, List<Expression> args) {
+        this.scope = scope;
+        this.name = name;
+        this.args = args;
+    }
+
+    public MethodCallExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression scope, List<Type> typeArgs, String name, List<Expression> args) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.scope = scope;
         this.typeArgs = typeArgs;
         this.name = name;
         this.args = args;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    public List<Expression> getArgs() {
+        return args;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Expression getScope() {
@@ -56,22 +88,20 @@ public final class MethodCallExpr extends Expression {
         return typeArgs;
     }
 
-    public String getName() {
-        return name;
+    public void setArgs(List<Expression> args) {
+        this.args = args;
     }
 
-    public List<Expression> getArgs() {
-        return args;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setScope(Expression scope) {
+        this.scope = scope;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setTypeArgs(List<Type> typeArgs) {
+        this.typeArgs = typeArgs;
     }
 
 }

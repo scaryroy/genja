@@ -26,6 +26,7 @@ import japa.parser.ast.type.Type;
 import japa.parser.ast.visitor.GenericVisitor;
 import japa.parser.ast.visitor.VoidVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,28 +34,60 @@ import java.util.List;
  */
 public final class FieldDeclaration extends BodyDeclaration {
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<AnnotationExpr> annotations;
+    private Type type;
 
-    private final Type type;
+    private List<VariableDeclarator> variables;
 
-    private final List<VariableDeclarator> variables;
+    public FieldDeclaration() {
+    }
 
-    public FieldDeclaration(int line, int column, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, List<VariableDeclarator> variables) {
-        super(line, column, javaDoc);
+    public FieldDeclaration(int modifiers, Type type, VariableDeclarator variable) {
         this.modifiers = modifiers;
-        this.annotations = annotations;
+        this.type = type;
+        this.variables = new ArrayList<VariableDeclarator>();
+        this.variables.add(variable);
+    }
+
+    public FieldDeclaration(int modifiers, Type type, List<VariableDeclarator> variables) {
+        this.modifiers = modifiers;
         this.type = type;
         this.variables = variables;
     }
 
-    public int getModifiers() {
-        return modifiers;
+    public FieldDeclaration(JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, List<VariableDeclarator> variables) {
+        super(annotations, javaDoc);
+        this.modifiers = modifiers;
+        this.type = type;
+        this.variables = variables;
     }
 
-    public List<AnnotationExpr> getAnnotations() {
-        return annotations;
+    public FieldDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, JavadocComment javaDoc, int modifiers, List<AnnotationExpr> annotations, Type type, List<VariableDeclarator> variables) {
+        super(beginLine, beginColumn, endLine, endColumn, annotations, javaDoc);
+        this.modifiers = modifiers;
+        this.type = type;
+        this.variables = variables;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    /**
+     * Return the modifiers of this member declaration.
+     * 
+     * @see ModifierSet
+     * @return modifiers
+     */
+    public int getModifiers() {
+        return modifiers;
     }
 
     public Type getType() {
@@ -65,13 +98,15 @@ public final class FieldDeclaration extends BodyDeclaration {
         return variables;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public void setVariables(List<VariableDeclarator> variables) {
+        this.variables = variables;
     }
 }

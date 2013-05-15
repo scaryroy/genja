@@ -29,13 +29,19 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public class IntegerLiteralExpr extends StringLiteralExpr {
 
-    public IntegerLiteralExpr(int line, int column, String value) {
-        super(line, column, value);
+    private static final String UNSIGNED_MIN_VALUE = "2147483648";
+
+    protected static final String MIN_VALUE = "-" + UNSIGNED_MIN_VALUE;
+
+    public IntegerLiteralExpr() {
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public IntegerLiteralExpr(String value) {
+        super(value);
+    }
+
+    public IntegerLiteralExpr(int beginLine, int beginColumn, int endLine, int endColumn, String value) {
+        super(beginLine, beginColumn, endLine, endColumn, value);
     }
 
     @Override
@@ -43,9 +49,14 @@ public class IntegerLiteralExpr extends StringLiteralExpr {
         return v.visit(this, arg);
     }
 
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
     public final boolean isMinValue() {
         return value != null && //
                 value.length() == 10 && //
-                value.equals("2147483648");
+                value.equals(UNSIGNED_MIN_VALUE);
     }
 }

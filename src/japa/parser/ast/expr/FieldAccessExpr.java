@@ -32,17 +32,39 @@ import java.util.List;
  */
 public final class FieldAccessExpr extends Expression {
 
-    private final Expression scope;
+    private Expression scope;
 
-    private final List<Type> typeArgs;
+    private List<Type> typeArgs;
 
-    private final String field;
+    private String field;
 
-    public FieldAccessExpr(int line, int column, Expression scope, List<Type> typeArgs, String field) {
-        super(line, column);
+    public FieldAccessExpr() {
+    }
+
+    public FieldAccessExpr(Expression scope, String field) {
+        this.scope = scope;
+        this.field = field;
+    }
+
+    public FieldAccessExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression scope, List<Type> typeArgs, String field) {
+        super(beginLine, beginColumn, endLine, endColumn);
         this.scope = scope;
         this.typeArgs = typeArgs;
         this.field = field;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
+    }
+
+    public String getField() {
+        return field;
     }
 
     public Expression getScope() {
@@ -53,18 +75,16 @@ public final class FieldAccessExpr extends Expression {
         return typeArgs;
     }
 
-    public String getField() {
-        return field;
+    public void setField(String field) {
+        this.field = field;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setScope(Expression scope) {
+        this.scope = scope;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setTypeArgs(List<Type> typeArgs) {
+        this.typeArgs = typeArgs;
     }
 
 }

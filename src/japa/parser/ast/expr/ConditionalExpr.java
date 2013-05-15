@@ -29,29 +29,31 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class ConditionalExpr extends Expression {
 
-    private final Expression condition;
+    private Expression condition;
 
-    private final Expression thenExpr;
+    private Expression thenExpr;
 
-    private final Expression elseExpr;
+    private Expression elseExpr;
 
-    public ConditionalExpr(int line, int column, Expression condition, Expression thenExpr, Expression elseExpr) {
-        super(line, column);
+    public ConditionalExpr() {
+    }
+
+    public ConditionalExpr(Expression condition, Expression thenExpr, Expression elseExpr) {
         this.condition = condition;
         this.thenExpr = thenExpr;
         this.elseExpr = elseExpr;
     }
 
-    public Expression getCondition() {
-        return condition;
+    public ConditionalExpr(int beginLine, int beginColumn, int endLine, int endColumn, Expression condition, Expression thenExpr, Expression elseExpr) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.condition = condition;
+        this.thenExpr = thenExpr;
+        this.elseExpr = elseExpr;
     }
 
-    public Expression getThenExpr() {
-        return thenExpr;
-    }
-
-    public Expression getElseExpr() {
-        return elseExpr;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -59,9 +61,28 @@ public final class ConditionalExpr extends Expression {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getCondition() {
+        return condition;
+    }
+
+    public Expression getElseExpr() {
+        return elseExpr;
+    }
+
+    public Expression getThenExpr() {
+        return thenExpr;
+    }
+
+    public void setCondition(Expression condition) {
+        this.condition = condition;
+    }
+
+    public void setElseExpr(Expression elseExpr) {
+        this.elseExpr = elseExpr;
+    }
+
+    public void setThenExpr(Expression thenExpr) {
+        this.thenExpr = thenExpr;
     }
 
 }

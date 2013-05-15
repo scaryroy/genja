@@ -1,14 +1,15 @@
 package genja.transform;
 
+import japa.parser.ast.Node;
 import japa.parser.ast.stmt.BreakStmt;
-import japa.parser.ast.stmt.Statement;
-import japa.parser.ast.visitor.GenericVisitorAdapter;
+import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
 /**
  * The labeled break transformer rewrites all breaks with labels and replaces them with jumps.
  */
-class LabeledBreakTransform extends GenericVisitorAdapter<Statement, Generator> {
-    public Statement visit(BreakStmt n, Generator s) {
+class LabeledBreakTransform extends ModifierVisitorAdapter<Generator> {
+    @Override
+    public Node visit(BreakStmt n, Generator s) {
         if (n.getId() != null && s.labels.containsKey(n.getId())) {
             // Generate a jump to another label, if the label is inside our state machine.
             //

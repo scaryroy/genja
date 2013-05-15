@@ -30,29 +30,31 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class IfStmt extends Statement {
 
-    private final Expression condition;
+    private Expression condition;
 
-    private final Statement thenStmt;
+    private Statement thenStmt;
 
-    private final Statement elseStmt;
+    private Statement elseStmt;
 
-    public IfStmt(int line, int column, Expression condition, Statement thenStmt, Statement elseStmt) {
-        super(line, column);
+    public IfStmt() {
+    }
+
+    public IfStmt(Expression condition, Statement thenStmt, Statement elseStmt) {
         this.condition = condition;
         this.thenStmt = thenStmt;
         this.elseStmt = elseStmt;
     }
 
-    public Expression getCondition() {
-        return condition;
+    public IfStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression condition, Statement thenStmt, Statement elseStmt) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.condition = condition;
+        this.thenStmt = thenStmt;
+        this.elseStmt = elseStmt;
     }
 
-    public Statement getThenStmt() {
-        return thenStmt;
-    }
-
-    public Statement getElseStmt() {
-        return elseStmt;
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
     }
 
     @Override
@@ -60,8 +62,27 @@ public final class IfStmt extends Statement {
         v.visit(this, arg);
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public Expression getCondition() {
+        return condition;
+    }
+
+    public Statement getElseStmt() {
+        return elseStmt;
+    }
+
+    public Statement getThenStmt() {
+        return thenStmt;
+    }
+
+    public void setCondition(Expression condition) {
+        this.condition = condition;
+    }
+
+    public void setElseStmt(Statement elseStmt) {
+        this.elseStmt = elseStmt;
+    }
+
+    public void setThenStmt(Statement thenStmt) {
+        this.thenStmt = thenStmt;
     }
 }

@@ -32,14 +32,32 @@ import java.util.List;
  */
 public final class SwitchEntryStmt extends Statement {
 
-    private final Expression label;
+    private Expression label;
 
-    private final List<Statement> stmts;
+    private List<Statement> stmts;
 
-    public SwitchEntryStmt(int line, int column, Expression label, List<Statement> stmts) {
-        super(line, column);
+    public SwitchEntryStmt() {
+    }
+
+    public SwitchEntryStmt(Expression label, List<Statement> stmts) {
         this.label = label;
         this.stmts = stmts;
+    }
+
+    public SwitchEntryStmt(int beginLine, int beginColumn, int endLine, int endColumn, Expression label, List<Statement> stmts) {
+        super(beginLine, beginColumn, endLine, endColumn);
+        this.label = label;
+        this.stmts = stmts;
+    }
+
+    @Override
+    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
+        return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 
     public Expression getLabel() {
@@ -50,13 +68,11 @@ public final class SwitchEntryStmt extends Statement {
         return stmts;
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public void setLabel(Expression label) {
+        this.label = label;
     }
 
-    @Override
-    public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
-        return v.visit(this, arg);
+    public void setStmts(List<Statement> stmts) {
+        this.stmts = stmts;
     }
 }

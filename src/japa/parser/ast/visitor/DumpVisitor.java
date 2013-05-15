@@ -25,7 +25,6 @@ import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.ImportDeclaration;
 import japa.parser.ast.LineComment;
-import japa.parser.ast.Node;
 import japa.parser.ast.PackageDeclaration;
 import japa.parser.ast.TypeParameter;
 import japa.parser.ast.body.AnnotationDeclaration;
@@ -77,7 +76,6 @@ import japa.parser.ast.expr.QualifiedNameExpr;
 import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.expr.StringLiteralExpr;
 import japa.parser.ast.expr.SuperExpr;
-import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -119,6 +117,56 @@ import java.util.List;
  */
 
 public final class DumpVisitor implements VoidVisitor<Object> {
+
+    private static class SourcePrinter {
+
+        private int level = 0;
+
+        private boolean indented = false;
+
+        private final StringBuilder buf = new StringBuilder();
+
+        public void indent() {
+            level++;
+        }
+
+        public void unindent() {
+            level--;
+        }
+
+        private void makeIndent() {
+            for (int i = 0; i < level; i++) {
+                buf.append("    ");
+            }
+        }
+
+        public void print(String arg) {
+            if (!indented) {
+                makeIndent();
+                indented = true;
+            }
+            buf.append(arg);
+        }
+
+        public void printLn(String arg) {
+            print(arg);
+            printLn();
+        }
+
+        public void printLn() {
+            buf.append("\n");
+            indented = false;
+        }
+
+        public String getSource() {
+            return buf.toString();
+        }
+
+        @Override
+        public String toString() {
+            return getSource();
+        }
+    }
 
     private final SourcePrinter printer = new SourcePrinter();
 
@@ -216,13 +264,29 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(Node n, Object arg) {
-        throw new IllegalStateException(n.getClass().getName());
+    private void printArguments(List<Expression> args, Object arg) {
+        printer.print("(");
+        if (args != null) {
+            for (Iterator<Expression> i = args.iterator(); i.hasNext();) {
+                Expression e = i.next();
+                e.accept(this, arg);
+                if (i.hasNext()) {
+                    printer.print(", ");
+                }
+            }
+        }
+        printer.print(")");
+    }
+
+    private void printJavadoc(JavadocComment javadoc, Object arg) {
+        if (javadoc != null) {
+            javadoc.accept(this, arg);
+        }
     }
 
     public void visit(CompilationUnit n, Object arg) {
-        if (n.getPakage() != null) {
-            n.getPakage().accept(this, arg);
+        if (n.getPackage() != null) {
+            n.getPackage().accept(this, arg);
         }
         if (n.getImports() != null) {
             for (ImportDeclaration i : n.getImports()) {
@@ -272,9 +336,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ClassOrInterfaceDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -320,9 +382,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(EmptyTypeDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printer.print(";");
     }
 
@@ -404,9 +464,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(FieldDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
         n.getType().accept(this, arg);
@@ -468,7 +526,6 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     public void visit(ArrayCreationExpr n, Object arg) {
         printer.print("new ");
         n.getType().accept(this, arg);
-        printTypeArgs(n.getTypeArgs(), arg);
 
         if (n.getDimensions() != null) {
             for (Expression dim : n.getDimensions()) {
@@ -670,7 +727,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(BooleanLiteralExpr n, Object arg) {
-        printer.print(n.getValue().toString());
+        printer.print(String.valueOf(n.getValue()));
     }
 
     public void visit(NullLiteralExpr n, Object arg) {
@@ -700,17 +757,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         }
         printTypeArgs(n.getTypeArgs(), arg);
         printer.print(n.getName());
-        printer.print("(");
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
-                }
-            }
-        }
-        printer.print(")");
+        printArguments(n.getArgs(), arg);
     }
 
     public void visit(ObjectCreationExpr n, Object arg) {
@@ -724,17 +771,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         printTypeArgs(n.getTypeArgs(), arg);
         n.getType().accept(this, arg);
 
-        printer.print("(");
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
-                }
-            }
-        }
-        printer.print(")");
+        printArguments(n.getArgs(), arg);
 
         if (n.getAnonymousClassBody() != null) {
             printer.printLn(" {");
@@ -743,11 +780,6 @@ public final class DumpVisitor implements VoidVisitor<Object> {
             printer.unindent();
             printer.print("}");
         }
-    }
-
-    public void visit(SuperMemberAccessExpr n, Object arg) {
-        printer.print("super.");
-        printer.print(n.getName());
     }
 
     public void visit(UnaryExpr n, Object arg) {
@@ -772,13 +804,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
                 break;
         }
 
-        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
-            printer.print("(");
-        }
         n.getExpr().accept(this, arg);
-        if (n.getExpr().getClass().equals(BinaryExpr.class)) {
-            printer.print(")");
-        }
 
         switch (n.getOperator()) {
             case posIncrement:
@@ -791,9 +817,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ConstructorDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -830,9 +854,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(MethodDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -906,17 +928,8 @@ public final class DumpVisitor implements VoidVisitor<Object> {
             printTypeArgs(n.getTypeArgs(), arg);
             printer.print("super");
         }
-        printer.print("(");
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
-                }
-            }
-        }
-        printer.print(");");
+        printArguments(n.getArgs(), arg);
+        printer.print(";");
     }
 
     public void visit(VariableDeclarationExpr n, Object arg) {
@@ -1031,9 +1044,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(EnumDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -1076,22 +1087,12 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(EnumConstantDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printer.print(n.getName());
 
         if (n.getArgs() != null) {
-            printer.print("(");
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
-                }
-            }
-            printer.print(")");
+            printArguments(n.getArgs(), arg);
         }
 
         if (n.getClassBody() != null) {
@@ -1104,16 +1105,12 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(EmptyMemberDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printer.print(";");
     }
 
     public void visit(InitializerDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         if (n.isStatic()) {
             printer.print("static ");
         }
@@ -1229,9 +1226,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(AnnotationDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -1247,9 +1242,7 @@ public final class DumpVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(AnnotationMemberDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+        printJavadoc(n.getJavaDoc(), arg);
         printMemberAnnotations(n.getAnnotations(), arg);
         printModifiers(n.getModifiers());
 
@@ -1281,11 +1274,13 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         printer.print("@");
         n.getName().accept(this, arg);
         printer.print("(");
-        for (Iterator<MemberValuePair> i = n.getPairs().iterator(); i.hasNext();) {
-            MemberValuePair m = i.next();
-            m.accept(this, arg);
-            if (i.hasNext()) {
-                printer.print(", ");
+        if (n.getPairs() != null) {
+            for (Iterator<MemberValuePair> i = n.getPairs().iterator(); i.hasNext();) {
+                MemberValuePair m = i.next();
+                m.accept(this, arg);
+                if (i.hasNext()) {
+                    printer.print(", ");
+                }
             }
         }
         printer.print(")");
@@ -1316,4 +1311,5 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         }
         printer.print(";");
     }
+
 }

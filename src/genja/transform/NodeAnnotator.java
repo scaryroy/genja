@@ -4,7 +4,6 @@ import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.ImportDeclaration;
 import japa.parser.ast.LineComment;
-import japa.parser.ast.Node;
 import japa.parser.ast.PackageDeclaration;
 import japa.parser.ast.TypeParameter;
 import japa.parser.ast.body.AnnotationDeclaration;
@@ -51,7 +50,6 @@ import japa.parser.ast.expr.QualifiedNameExpr;
 import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.expr.StringLiteralExpr;
 import japa.parser.ast.expr.SuperExpr;
-import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -90,11 +88,6 @@ import japa.parser.ast.visitor.GenericVisitor;
  * later (such as if a node has a yield).
  */
 class NodeAnnotator implements GenericVisitor<Boolean, Void> {
-    @Override
-    public Boolean visit(Node n, Void arg) {
-        throw new IllegalStateException(n.getClass().getName());
-    }
-
     @Override
     public Boolean visit(CompilationUnit n, Void arg) {
         return false;
@@ -352,11 +345,6 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(QualifiedNameExpr n, Void arg) {
-        return false;
-    }
-
-    @Override
-    public Boolean visit(SuperMemberAccessExpr n, Void arg) {
         return false;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Jlio Vilmar Gesser.
+ * Copyright (C) 2008 Júlio Vilmar Gesser.
  * 
  * This file is part of Java 1.5 parser and Abstract Syntax Tree.
  *
@@ -25,7 +25,6 @@ import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.ImportDeclaration;
 import japa.parser.ast.LineComment;
-import japa.parser.ast.Node;
 import japa.parser.ast.PackageDeclaration;
 import japa.parser.ast.TypeParameter;
 import japa.parser.ast.body.AnnotationDeclaration;
@@ -76,7 +75,6 @@ import japa.parser.ast.expr.QualifiedNameExpr;
 import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.expr.StringLiteralExpr;
 import japa.parser.ast.expr.SuperExpr;
-import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -113,7 +111,7 @@ import japa.parser.ast.type.WildcardType;
 /**
  * @author Julio Vilmar Gesser
  */
-public class GenericVisitorAdapter<R, A> implements GenericVisitor<R, A> {
+public abstract class GenericVisitorAdapter<R, A> implements GenericVisitor<R, A> {
 
     public R visit(AnnotationDeclaration n, A arg) {
         if (n.getJavaDoc() != null) {
@@ -281,8 +279,8 @@ public class GenericVisitorAdapter<R, A> implements GenericVisitor<R, A> {
     }
 
     public R visit(CompilationUnit n, A arg) {
-        if (n.getPakage() != null) {
-            n.getPakage().accept(this, arg);
+        if (n.getPackage() != null) {
+            n.getPackage().accept(this, arg);
         }
         if (n.getImports() != null) {
             for (ImportDeclaration i : n.getImports()) {
@@ -817,23 +815,18 @@ public class GenericVisitorAdapter<R, A> implements GenericVisitor<R, A> {
         return null;
     }
 
+    public R visit(YieldStmt n, A arg) {
+        if (n.getExpr() != null) {
+            n.getExpr().accept(this, arg);
+        }
+        return null;
+    }
+
     public R visit(BlockComment n, A arg) {
         return null;
     }
 
     public R visit(LineComment n, A arg) {
-        return null;
-    }
-
-    public R visit(Node n, A arg) {
-        throw new IllegalStateException(n.getClass().getName());
-    }
-
-    public R visit(SuperMemberAccessExpr n, A arg) {
-        return null;
-    }
-
-    public R visit(YieldStmt n, A arg) {
         return null;
     }
 

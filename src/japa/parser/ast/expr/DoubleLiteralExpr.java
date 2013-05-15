@@ -29,17 +29,24 @@ import japa.parser.ast.visitor.VoidVisitor;
  */
 public final class DoubleLiteralExpr extends StringLiteralExpr {
 
-    public DoubleLiteralExpr(int line, int column, String value) {
-        super(line, column, value);
+    public DoubleLiteralExpr() {
     }
 
-    @Override
-    public <A> void accept(VoidVisitor<A> v, A arg) {
-        v.visit(this, arg);
+    public DoubleLiteralExpr(String value) {
+        super(value);
+    }
+
+    public DoubleLiteralExpr(int beginLine, int beginColumn, int endLine, int endColumn, String value) {
+        super(beginLine, beginColumn, endLine, endColumn, value);
     }
 
     @Override
     public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
         return v.visit(this, arg);
+    }
+
+    @Override
+    public <A> void accept(VoidVisitor<A> v, A arg) {
+        v.visit(this, arg);
     }
 }

@@ -21,6 +21,8 @@
  */
 package japa.parser.ast.body;
 
+import japa.parser.ast.expr.AnnotationExpr;
+
 import java.util.List;
 
 /**
@@ -28,29 +30,61 @@ import java.util.List;
  */
 public abstract class TypeDeclaration extends BodyDeclaration {
 
-    private final String name;
+    private String name;
 
-    private final int modifiers;
+    private int modifiers;
 
-    private final List<BodyDeclaration> members;
+    private List<BodyDeclaration> members;
 
-    public TypeDeclaration(int line, int column, JavadocComment javaDoc, String name, int modifiers, List<BodyDeclaration> members) {
-        super(line, column, javaDoc);
+    public TypeDeclaration() {
+    }
+
+    public TypeDeclaration(int modifiers, String name) {
+        this.name = name;
+        this.modifiers = modifiers;
+    }
+
+    public TypeDeclaration(List<AnnotationExpr> annotations, JavadocComment javaDoc, int modifiers, String name, List<BodyDeclaration> members) {
+        super(annotations, javaDoc);
         this.name = name;
         this.modifiers = modifiers;
         this.members = members;
     }
 
-    public String getName() {
-        return name;
+    public TypeDeclaration(int beginLine, int beginColumn, int endLine, int endColumn, List<AnnotationExpr> annotations, JavadocComment javaDoc, int modifiers, String name, List<BodyDeclaration> members) {
+        super(beginLine, beginColumn, endLine, endColumn, annotations, javaDoc);
+        this.name = name;
+        this.modifiers = modifiers;
+        this.members = members;
     }
 
-    public int getModifiers() {
-        return modifiers;
-    }
-
-    public List<BodyDeclaration> getMembers() {
+    public final List<BodyDeclaration> getMembers() {
         return members;
     }
 
+    /**
+     * Return the modifiers of this type declaration.
+     * 
+     * @see ModifierSet
+     * @return modifiers
+     */
+    public final int getModifiers() {
+        return modifiers;
+    }
+
+    public final String getName() {
+        return name;
+    }
+
+    public void setMembers(List<BodyDeclaration> members) {
+        this.members = members;
+    }
+
+    public final void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public final void setName(String name) {
+        this.name = name;
+    }
 }
