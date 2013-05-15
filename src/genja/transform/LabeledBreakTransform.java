@@ -2,6 +2,7 @@ package genja.transform;
 
 import japa.parser.ast.Node;
 import japa.parser.ast.stmt.BreakStmt;
+import japa.parser.ast.stmt.ContinueStmt;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
 /**
@@ -10,19 +11,31 @@ import japa.parser.ast.visitor.ModifierVisitorAdapter;
 class LabeledBreakTransform extends ModifierVisitorAdapter<Generator> {
     @Override
     public Node visit(BreakStmt n, Generator s) {
-        if (n.getId() != null && s.labels.containsKey(n.getId())) {
+        if (n.getId() != null) {
             if (n.getId().equals(".loop")) {
-                throw new UnsupportedOperationException("leftover break from intra-loop jump transform");
+                throw new TransformException("break outside of loop");
             }
 
-            // Generate a jump to another label, if the label is inside our state machine.
-            //
-            // TODO: Ensure we're not jumping somewhere really weird.
-            return Generator.generateJump(s.labels.get(n.getId()).breakPoint);
+            if (s.labels.containsKey(n.getId())) {
+                // Generate a jump to another label, if the label is inside our state machine.
+                //
+                // TODO: Ensure we're not jumping somewhere really weird.
+                return Generator.generateJump(s.labels.get(n.getId()).breakPoint);
+            }
         }
 
  
         // Otherwise we just move the statement out.
+        return n;
+    }
+
+    @Override
+    public Node visit(ContinueStmt n, Generator s) {
+        if (n.getId() != null && n.getId().equals(".loop")) {
+            throw new TransformException("continue outside of loop");
+        }
+
+         // Otherwise we just move the statement out.
         return n;
     }
 }

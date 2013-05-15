@@ -38,6 +38,11 @@ class Generator {
     LoopMarker loop;
 
     /**
+     * The curreent label we're in.
+     */
+    Label label;
+
+    /**
      * The states.
      */
     List<SwitchEntryStmt> states;
@@ -45,7 +50,7 @@ class Generator {
     /**
      * List of labels.
      */
-    Map<String, TransitionPoint> labels;
+    Map<String, Label> labels;
 
     /**
      * Create a new generator.
@@ -53,7 +58,8 @@ class Generator {
     public Generator() {
         this.states = new ArrayList<SwitchEntryStmt>();
         this.loop = null;
-        this.labels = new HashMap<String, TransitionPoint>();
+        this.label = null;
+        this.labels = new HashMap<String, Label>();
 
         this.newState();
     }
@@ -142,12 +148,34 @@ class Generator {
     }
 
     /**
-     * Add a label corresponding to the current state.
+     * Enter a label context corresponding to the current state.
      */
-    void addLabel(String name, TransitionPoint p) {
-        this.labels.put(name, p);
+    void enterLabel(String name) {
+        this.label = new Label(name, this.getCurrentState(), -1, this.label);
+        this.labels.put(name, this.label);
     }
 
+    /**
+     * Exit a label context.
+     */
+    void exitLabel() {
+        this.label = this.label.back;
+    }
+
+    /**
+     * Check if a delimited jump is possible to the given label.
+     */
+    boolean canJumpTo(String name) {
+        Label c = this.label;
+        while (c != null) {
+            if (c.name.equals(name)) {
+                return true;
+            }
+            c = c.back;
+        }
+        return false;
+    }
+    
     /**
      * Generate the statements for the generator.
      */

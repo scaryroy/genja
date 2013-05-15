@@ -96,19 +96,17 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(MethodDeclaration n, Generator s) {
         if (!n.isGenerator()) {
-            throw new UnsupportedOperationException("cannot transform non-generator");
+            throw new TransformException("cannot transform non-generator");
         }
 
         // Annotate ALL the nodes!
         n.accept(new NodeAnnotator(), null);
 
-        for (Statement stmt : n.getBody().getStmts()) {
-            if (stmt.getData() != null && ((NodeAnnotation) stmt.getData()).needsProcessing) {
-                stmt.accept(this, s);
-            } else {
-                s.addStatement(stmt);
-            }
-        }
+        // Transform all the eligible body nodes.
+        n.getBody().accept(this, s);
+
+        // Create a trap state that the generator can never escape.
+        s.addStatement(Generator.generateDeferredJump(s.getCurrentState()));
         s.addStatement(new ReturnStmt(new BooleanLiteralExpr(false)));
 
         for (SwitchEntryStmt st : s.states) {
@@ -140,22 +138,22 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(CompilationUnit n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(PackageDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ImportDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(TypeParameter n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
@@ -170,67 +168,67 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(ClassOrInterfaceDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(EnumDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(EmptyTypeDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(EnumConstantDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(AnnotationDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(AnnotationMemberDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(FieldDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(VariableDeclarator n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(VariableDeclaratorId n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ConstructorDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(Parameter n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(EmptyMemberDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(InitializerDeclaration n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
@@ -240,188 +238,188 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(ClassOrInterfaceType n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(PrimitiveType n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ReferenceType n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(VoidType n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(WildcardType n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ArrayAccessExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ArrayCreationExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ArrayInitializerExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(AssignExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(BinaryExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(CastExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ClassExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ConditionalExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(EnclosedExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(FieldAccessExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(InstanceOfExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(StringLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(IntegerLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(LongLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(IntegerLiteralMinValueExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(LongLiteralMinValueExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(CharLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(DoubleLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(BooleanLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(NullLiteralExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(MethodCallExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(NameExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ObjectCreationExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(QualifiedNameExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(ThisExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(SuperExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(UnaryExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(VariableDeclarationExpr n, Generator arg) {
         // TODO: we actually want to visit this :|
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(MarkerAnnotationExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(SingleMemberAnnotationExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(NormalAnnotationExpr n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(MemberValuePair n, Generator arg) {
-        throw new UnsupportedOperationException("don't know how to linearize");
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
@@ -451,12 +449,14 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(SwitchStmt n, Generator arg) {
-        arg.addStatement(n);
+        // TODO ugh, need to figure out this
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(SwitchEntryStmt n, Generator arg) {
-        arg.addStatement(n);
+        // TODO ugh, also need to figure this out
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
@@ -465,13 +465,16 @@ class LinearizeTransform implements VoidVisitor<Generator> {
             arg.addStatement(new BreakStmt(".loop"));
             return;
         }
+        if (!arg.canJumpTo(n.getId())) {
+            throw new TransformException("can't break to: " + n.getId());
+        }
         arg.addStatement(n);
     }
 
     @Override
     public void visit(ReturnStmt n, Generator arg) {
         if (n.getExpr() != null) {
-            throw new UnsupportedOperationException("don't know how to linearize");
+            throw new TransformException("don't know how to linearize");
         }
 
         arg.addStatement(Generator.generateJump(-1));
@@ -483,18 +486,20 @@ class LinearizeTransform implements VoidVisitor<Generator> {
             arg.addStatement(new ContinueStmt(".loop"));
             return;
         }
+        if (!arg.canJumpTo(n.getId())) {
+            throw new TransformException("can't continue to: " + n.getId());
+        }
         arg.addStatement(n);
     }
 
     @Override
     public void visit(DoStmt n, Generator arg) {
-        throw new UnsupportedOperationException("loop not desugared");
+        throw new TransformException("loop not desugared");
     }
 
     @Override
     public void visit(ForeachStmt n, Generator arg) {
-        // TODO reword loop
-
+        throw new TransformException("loop not desugared");
     }
 
     @Override
@@ -541,11 +546,11 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     public void visit(LabeledStmt n, Generator s) {
         // Create a new state so we can jump back here, if necessary.
         s.newState();
-        TransitionPoint p = new TransitionPoint(s.getCurrentState(), -1);
-        s.addLabel(n.getLabel(), p);
+        s.enterLabel(n.getLabel());
         n.getStmt().accept(this, s);
         s.newState();
-        p.breakPoint = s.getCurrentState();
+        s.label.breakPoint = s.getCurrentState();
+        s.exitLabel();
     }
 
     @Override
@@ -585,13 +590,13 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(WhileStmt n, Generator s) {
-        throw new UnsupportedOperationException("loop not desugared");
+        throw new TransformException("loop not desugared");
     }
 
     @Override
     public void visit(ForStmt n, Generator s) {
         if (n.getInit() != null || n.getCompare() != null || n.getUpdate() != null) {
-            throw new UnsupportedOperationException("loop not desugared");
+            throw new TransformException("loop not desugared");
         }
 
         // We have an infinite loop, which is in the correct form for us to transform.

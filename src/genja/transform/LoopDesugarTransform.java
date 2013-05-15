@@ -15,6 +15,7 @@ import japa.parser.ast.stmt.BreakStmt;
 import japa.parser.ast.stmt.DoStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.ForStmt;
+import japa.parser.ast.stmt.ForeachStmt;
 import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.WhileStmt;
@@ -61,6 +62,14 @@ public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
         stmts.add(n.getBody());
         BlockStmt b = new BlockStmt(stmts);
         return makeLoopStmt(b);
+    }
+
+    @Override
+    public Node visit(ForeachStmt n, Void arg) {
+        super.visit(n, arg);
+
+        // Reword the loop.
+        throw new TransformException("not supported yet");
     }
 
     @Override
