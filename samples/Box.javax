@@ -1,0 +1,17 @@
+public class Box {
+    public static Void* makeBox(final int rows, final int cols) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < rows; ++j) {
+                System.out.printf("[%2d]", i + j);
+                yield null;
+            }
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (Void _ : makeBox(10, 10)) {
+            Thread.sleep(100);
+        }
+    }
+}

@@ -1,0 +1,28 @@
+public class Range {
+    public static Integer* makeRange(final int start, final int stop, final int step) {
+        for (int i = start; i < stop; i += step) {
+            yield i;
+        }
+    }
+
+    public static void main(String[] args) {
+        Iterable<Integer> range = makeRange(1, 10, 1);
+
+        System.out.println("Counting to 10!");
+        for (int i : range) {
+            System.out.println(i + "...");
+            if (i == 5) {
+                System.out.println("Um, what's next?");
+                // Hey look, we can pause the iterator!
+                break;
+            }
+        }
+
+        // And then resume it!
+        for (int i : range) {
+            System.out.println(i + "...");
+        }
+
+        System.out.println("10!");
+    }
+}

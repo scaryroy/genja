@@ -1,5 +1,6 @@
 package genja.transform;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import japa.parser.ast.BlockComment;
@@ -106,7 +107,8 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         n.getBody().accept(this, s);
 
         // Create a trap state that the generator can never escape.
-        s.addStatement(Generator.generateDeferredJump(s.getCurrentState()));
+        s.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("-1"), new ArrayList<Statement>()));
+        s.addStatement(Generator.generateDeferredJump(-1));
         s.addStatement(new ReturnStmt(new BooleanLiteralExpr(false)));
 
         for (SwitchEntryStmt st : s.states) {

@@ -2,7 +2,12 @@ package genja.rt;
 
 import java.util.Iterator;
 
-public abstract class Generator<T> implements Iterator<T> {
+public abstract class Generator<T> implements Iterator<T>, Iterable<T> {
+    @Override
+    public Iterator<T> iterator() {
+        return this;
+    }
+
     @Override
     public boolean hasNext() {
         if (this.stale) {

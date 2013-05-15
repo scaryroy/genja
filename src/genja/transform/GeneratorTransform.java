@@ -67,7 +67,7 @@ public class GeneratorTransform extends GenericVisitorAdapter<MethodDeclaration,
                 n.getModifiers(),
                 n.getAnnotations(),
                 n.getTypeParameters(),
-                makeIteratorType(n.getType()),
+                makeRtGeneratorType(n.getType()),
                 n.getName(),
                 n.getParameters(),
                 n.getArrayCount(),
@@ -76,12 +76,6 @@ public class GeneratorTransform extends GenericVisitorAdapter<MethodDeclaration,
                 new BlockStmt(methodBody));
 
         return n2;
-    }
-
-    private ClassOrInterfaceType makeIteratorType(Type type) {
-        List<Type> typeArgs = new ArrayList<Type>();
-        typeArgs.add(type);
-        return new ClassOrInterfaceType(0, 0, 0, 0, new ClassOrInterfaceType(new ClassOrInterfaceType("java"), "util"), "Iterator", typeArgs);
     }
 
     private ClassOrInterfaceType makeRtGeneratorType(Type type) {

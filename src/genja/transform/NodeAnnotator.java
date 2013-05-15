@@ -485,7 +485,9 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(ReturnStmt n, Void arg) {
-        return false;
+        NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
+        n.setData(nodeAnnotation);
+        return true;
     }
 
     @Override

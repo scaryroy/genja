@@ -138,7 +138,7 @@ selected to be linearized. In particular, any node containing a \texttt{yield}, 
 \begin{figure}
 \begin{algorithmic}
 \Function{MarkLinearization}{node}
-    \If{node $\in$ yields $\cup$ breaks $\cup$ continues}
+    \If{node $\in$ yields $\cup$ breaks $\cup$ continues $\cup$ returns}
         \State \Call{Mark}{node}
         \State \Return True
     \EndIf
