@@ -97,7 +97,7 @@ mangling.
 \begin{algorithmic}
 \Function{ScopeMangle}{node}
     \State id $\gets$ 0
-    \For{b $\in$ node's blocks}
+    \ForAll{b $\in$ node's blocks}
         \ForAll{d $\in$ b's declarations}
             \State \Call{Prepend}{id, d's variable name}
         \EndFor
