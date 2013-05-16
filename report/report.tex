@@ -235,12 +235,17 @@ the current value yielded from the state machine and set the stale flag to true.
 
 \section{Known Issues}
 
-Due to the time constraints of this assignment, the following features have not been implemented.
+Due to the time constraints of this assignment, the following non-essential features have been
+considered but not implemented. I believe sufficient functionality has been supplied in the
+implementation provided for a useful implementation of generators.
 
 \begin{itemize}
-\item try-catch-finally. This involves catching exceptions at every state that is surrounded by
-      a try block -- possibly multiple try blocks. Additional machine states are generated for
-      catches, and an unconditional jump needs to be generated to finally states.
+\item \texttt{try-catch-finally}. As the generator enables pausing code at arbitrary points, we can
+      enclose execution of the generator in an overarching \texttt{try} statement, and jump into
+      \texttt{catch} clauses when an exception is encountered. Indeed, linearization is a variant
+      of a continuation-passing style transform, and exceptions are variants of non-local jumps --
+      consequently, we can use linearization-equivalent continuations (states) to represent
+      non-local jumps and, in turn, to represent exceptions.
 
 \item Duplicate state elimination. The linearization pass generates states at each point where
       execution could jump to or be resumed at. These are often duplicated and can be eliminated
