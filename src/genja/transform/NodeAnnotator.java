@@ -426,6 +426,7 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
             if (n.getStmt().accept(this, arg)) {
                 NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
                 n.setData(nodeAnnotation);
+                return true;
             }
         }
 

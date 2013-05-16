@@ -397,7 +397,6 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(VariableDeclarationExpr n, Generator arg) {
-        // TODO: we actually want to visit this :|
         throw new TransformException("don't know how to linearize");
     }
 
@@ -549,9 +548,6 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
         // Lookahead -- if the loop body is a canonical loop, the label is also
         // a loop marker.
-        //
-        // TODO: This falls apart on desugared for loops -- but then again,
-        //       labeling on desugared for loops has always been super iffy.
         if (n.getStmt().getClass().equals(ForStmt.class)) {
             s.label.loop = true;
         }

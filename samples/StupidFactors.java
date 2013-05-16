@@ -10,8 +10,8 @@ public class StupidFactors {
             protected boolean moveNext() {
                 for (; ; ) switch($state) {
                     case 0:
-                    case 1:
                         s0$i = 0;
+                    case 1:
                     case 2:
                         if (!(s0$i < n)) if (true) {
                             $state = 3;

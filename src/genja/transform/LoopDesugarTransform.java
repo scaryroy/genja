@@ -17,11 +17,22 @@ import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.ForStmt;
 import japa.parser.ast.stmt.ForeachStmt;
 import japa.parser.ast.stmt.IfStmt;
+import japa.parser.ast.stmt.LabeledStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
 public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
+    String lastLabelName;
+    Node lastLabelChild;
+    boolean labelRequiresRemoving;
+
+    public LoopDesugarTransform() {
+        this.lastLabelName = null;
+        this.lastLabelChild = null;
+        this.labelRequiresRemoving = false;
+    }
+
     /**
      * Make a loop condition enforced.
      */
@@ -73,6 +84,22 @@ public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
     }
 
     @Override
+    public Node visit(LabeledStmt n, Void arg) {
+        this.lastLabelChild = n.getStmt();
+        this.lastLabelName = n.getLabel();
+        n = (LabeledStmt) super.visit(n, arg);
+        try {
+            if (this.labelRequiresRemoving) {
+                return n.getStmt();
+            } else {
+                return n;
+            }
+        } finally {
+            this.labelRequiresRemoving = false;
+        }
+    }
+
+    @Override
     public Node visit(ForStmt n, Void arg) {
         super.visit(n, arg);
 
@@ -109,7 +136,15 @@ public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
                 substmts.add(new ExpressionStmt(e));
             }
 
-            stmts.add(makeLoopStmt(new BlockStmt(substmts)));
+            Statement loop = makeLoopStmt(new BlockStmt(substmts));
+
+            // If we encountered a label for this loop, then we move the label
+            // into here.
+            if (this.lastLabelChild == n) {
+                loop = new LabeledStmt(this.lastLabelName, loop);
+                this.labelRequiresRemoving = true;
+            }
+            stmts.add(loop);
 
             return new BlockStmt(stmts);
         }
