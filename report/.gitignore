@@ -2,3 +2,5 @@
 *.log
 *.pyg
 *.out
+*.fls
+*.fdb_latexmk
