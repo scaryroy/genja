@@ -462,7 +462,10 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // Create a list of entries to populate later.
         List<SwitchEntryStmt> entries = new ArrayList<SwitchEntryStmt>();
 
-        // Switch jump.
+        // Switch jump, setting the switch jump flag to false.
+        arg.addStatement(new ExpressionStmt(new AssignExpr(Generator.SWITCH_JUMP_VAR,
+                                                           new BooleanLiteralExpr(false),
+                                                           AssignExpr.Operator.assign)));
         arg.addStatement(new SwitchStmt(n.getSelector(), entries));
 
         List<Statement> entryBlockStatements = arg.getCurrentStateNode().getStmts();
@@ -474,6 +477,11 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
             // Generate the body of the linearized switch block.
             List<Statement> stmts = new ArrayList<Statement>();
+
+            // Set the switch-jump flag to true;
+            stmts.add(new ExpressionStmt(new AssignExpr(Generator.SWITCH_JUMP_VAR,
+                                                        new BooleanLiteralExpr(true),
+                                                        AssignExpr.Operator.assign)));
             stmts.add(Generator.generateJump(arg.getCurrentState()));
             SwitchEntryStmt entry = new SwitchEntryStmt(case_.getLabel(), stmts);
             entries.add(entry);
@@ -484,8 +492,9 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         arg.exitLabel();
 
         // Create a new jump out of the switch.
-        arg.newState();
-        entryBlockStatements.add(Generator.generateJump(arg.getCurrentState()));
+        entryBlockStatements.add(new IfStmt(Generator.SWITCH_JUMP_VAR,
+                                            Generator.generateJump(arg.getCurrentState()),
+                                            null));
     }
 
     @Override

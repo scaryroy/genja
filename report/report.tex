@@ -340,21 +340,20 @@ becomes:
 \begin{pygmented}{java}
 case 0:
     preamble;
-case 1:
     if (pred) {
-        state = 2;
+        state = 1;
         break;
     } else {
-        state = 3;
+        state = 2;
         break;
     }
-case 2:
+case 1:
     consequent;
-    state = 4;
+    state = 3;
     break;
-case 3:
+case 2:
     alternate;
-case 4:
+case 3:
     postamble;
 \end{pygmented}
 
@@ -388,19 +387,19 @@ case 3:
 preamble;
 switch (x) {
     case A:
-        body-a;
+        bodyA;
         break;
 
     case B:
-        body-b;
+        bodyB;
 
     case C:
     case D:
-        body-d;
+        bodyD;
         break;
 
     default:
-        body-default;
+        bodyDefault;
 }
 postamble;
 \end{pygmented}
@@ -410,36 +409,43 @@ becomes:
 \begin{pygmented}{java}
 case 0:
     preamble;
-case 1:
+    switchJump = false;
     switch (x) {
         case A:
-            state = 2;
+            switchJump = true;
+            state = 1;
             break;
         case B:
-            state = 3;
+            switchJump = true;
+            state = 2;
             break;
         case C:
         case D:
-            state = 4;
+            switchJump = true;
+            state = 3;
             break;
         default:
-            state = 5;
+            switchJump = true;
+            state = 4;
             break;
     }
+    if (!switchJump) {
+        state = 5;
+        break;
+    }
+case 1:
+    bodyA;
     state = 6;
     break;
 case 2:
-    body-a;
-    state = 6;
-    break;
+    bodyB;
 case 3:
-    body-b;
 case 4:
-    body-d;
+    bodyD;
     state = 6;
     break;
 case 5:
-    body-default;
+    bodyDefault;
 case 6:
     postamble;
 \end{pygmented}
@@ -451,15 +457,15 @@ case 6:
 preamble;
 switch (x) {
     case A:
-        body-a;
+        bodyA;
         break;
 
     case B:
-        body-b;
+        bodyB;
 
     case C:
     case D:
-        body-d;
+        bodyD;
         break;
 }
 postamble;
@@ -470,30 +476,39 @@ becomes:
 \begin{pygmented}{java}
 case 0:
     preamble;
-case 1:
+    switchJump = false;
     switch (x) {
         case A:
-            state = 2;
+            switchJump = true;
+            state = 1;
             break;
         case B:
-            state = 3;
+            switchJump = true;
+            state = 2;
             break;
         case C:
+            switchJump = true;
+            state = 3;
+            break;
         case D:
+            switchJump = true;
             state = 4;
             break;
     }
-    state = 5;
+    if (!switchJump) {
+        state = 4;
+        break;
+    }
+case 1:
+    bodyA;
+    state = 6;
     break;
 case 2:
-    body-a;
-    state = 6;
-    break;
+    bodyB;
 case 3:
-    body-b;
 case 4:
-    body-d;
-    state = 6;
+    bodyD;
+    state = 5;
     break;
 case 5:
     postamble;

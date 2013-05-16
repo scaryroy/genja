@@ -32,6 +32,8 @@ class Generator {
      */
     public static final NameExpr CURRENT_VAR = new NameExpr("$current");
 
+    public static final NameExpr SWITCH_JUMP_VAR = new NameExpr("$switchJump");
+    
     /**
      * Current implicit loop label number.
      */

@@ -36,8 +36,9 @@ public abstract class Generator<T> implements Iterator<T>, Iterable<T> {
 
     protected abstract boolean moveNext();
 
-    protected int $state;
-    protected T $current;
+    protected boolean $switchJump = false;
+    protected int $state = 0;
+    protected T $current = null;
 
     private boolean stale = true;
     private boolean last = true;
