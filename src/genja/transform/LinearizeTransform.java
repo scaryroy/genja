@@ -492,9 +492,10 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         arg.exitLabel();
 
         // Create a new jump out of the switch.
-        entryBlockStatements.add(new IfStmt(Generator.SWITCH_JUMP_VAR,
-                                            Generator.generateJump(arg.getCurrentState()),
+        entryBlockStatements.add(new IfStmt(new UnaryExpr(Generator.SWITCH_JUMP_VAR, UnaryExpr.Operator.not),
+                                            Generator.generateDeferredJump(arg.getCurrentState()),
                                             null));
+        entryBlockStatements.add(new BreakStmt());
     }
 
     @Override
