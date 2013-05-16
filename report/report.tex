@@ -84,22 +84,25 @@ Java employs block-level scoping for variables -- for example, variables declare
 variable names in the form they are suggested by the code, for example:
 
 \begin{pygmented}{java}
-int i = 0;
 {
-    int i = 1;
-    {
-        int i = 2;
-    }
+    int i = 0;
+}
+{
+    float i = 0.0f;
 }
 \end{pygmented}
 
-\texttt{i} should be 0 on the exit of the block but, if names are not mangled prior to
-linearization, the value will be 2 (or, worse yet, an error -- we've attempted to redeclare
-\texttt{i}).
+\texttt{i} is typed as an \texttt{int} in the first scope, but \texttt{float} in the second. If
+the statements are placed into a single block from both the blocks, we will find that we have a
+variable name clash, as well as the variable \texttt{i} having its type changed.
 
 As such, we mangle variable names in deeper scopes to ensure they don't conflict with variable
 names in higher scopes. Figure~\ref{algorithm:scope-mangling} details a basic algorithm for name
-mangling.
+mangling. We also perform partial semantic analysis of variable declaration at this point, ensuring
+that local variables are not redeclared. We maintain a stack of block scopes that represents the
+current block of code we're in, as well as all the ancestral blocks. The block scopes contain
+symbol tables that keep track of variable declarations in this scope -- if we find that a variable
+has been redeclared either in this scope or any ancestral scope, this is a semantic error.
 
 \begin{figure}
 \begin{algorithmic}
@@ -127,8 +130,8 @@ In practice, the block ID is not a simple monotonically increasing number. For t
 provided, the blocks are first numbered off by their offset to the start of the parent. The
 variables are then mangled using successive prepending of block numbers from the block the variable
 is declared in to the root of the method -- for example, in the example given earlier, the three
-variables will be mangled to \texttt{i}, \texttt{s0\$i} and \texttt{s0\$s0\$i} (root scope, scope
-0, and scope 0 inside scope 0).
+variables will be mangled to \texttt{s0\$i}, \texttt{s1\$i}. If a variable \texttt{j} was declared
+inside the second block inside a block, then it will be mangled to \texttt{s1\$s0\$j}.
 
 \subsection{Linearization} \label{section:linearization}
 
@@ -187,13 +190,15 @@ start state associated with it, i.e. the point we will jump to if we \texttt{con
 we process the label's child statement, we know the state at which the statement ends so we set
 that as the point that we jump to if we attempt to \texttt{break} to it. During transformation of
 child \texttt{break} and \texttt{continue} statements, we verify that we only ever attempt to
-\texttt{break} or \texttt{continue} to labels found in parent node.
+\texttt{break} or \texttt{continue} to labels found in parent node. If a label is directly adjacent
+to a loop, the label is marked as being a loop label (and consequently allows \texttt{continue}s).
 
 \item When the transformer encounters a canonical loop, we repeat the same procedure we did with
 the labels with the exception that we do not add them to the map of labels, nor do we name the loop
 labels. The transformer will then transform any label-less \texttt{break} and \texttt{continue}
 statements it finds into labeled ones, using special labels prefixed with \texttt{.loop}, followed
-by the loop number as dictated by enumeration order.
+by the loop number as dictated by enumeration order. We only allow \texttt{continue} statements
+to jump to an ancestral loop block.
 \end{itemize}
 
 After all the code has been linearized, we create a trap state that always deferred-jumps to itself
