@@ -35,7 +35,12 @@ class Generator {
     /**
      * Current implicit loop label number.
      */
-    int loopNum = 0;
+    int loopNum;
+
+    /**
+     * Current implicit switch number.
+     */
+    int switchNum;
 
     /**
      * The current label we're in.
@@ -56,6 +61,8 @@ class Generator {
      * Create a new generator.
      */
     public Generator() {
+        this.loopNum = 0;
+        this.switchNum = 0;
         this.states = new ArrayList<SwitchEntryStmt>();
         this.label = null;
         this.labels = new HashMap<String, Label>();
@@ -94,18 +101,17 @@ class Generator {
     }
 
     /**
-     * Enter a loop. This should be paired with exitLoop to generate the appropriate jump out.
+     * Enter a loop. This should be paired with exitLabel to generate the appropriate jump out.
      */
     void enterLoop() {
         this.enterLabel(".loop" + this.loopNum++);
         this.label.loop = true;
     }
-
     /**
-     * Exit a loop, rewriting the breaks and continues in the loop body.
+     * Enter a switch. This should be paired with exitLable to generate the appropriate jump out.
      */
-    void exitLoop() {
-        this.exitLabel();
+    void enterSwitch() {
+        this.enterLabel(".switch" + this.switchNum++);
     }
 
     /**

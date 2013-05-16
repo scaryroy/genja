@@ -453,14 +453,41 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(SwitchStmt n, Generator arg) {
-        // TODO ugh, need to figure out this
-        throw new TransformException("don't know how to linearize");
+        // Create a list of entries to populate later.
+        List<SwitchEntryStmt> entries = new ArrayList<SwitchEntryStmt>();
+
+        // Switch jump.
+        arg.addStatement(new SwitchStmt(n.getSelector(), entries));
+
+        List<Statement> entryBlockStatements = arg.getCurrentStateNode().getStmts();
+        
+        // Generate all the switch cases.
+        arg.enterSwitch();
+        for (SwitchEntryStmt case_ : n.getEntries()) {
+            arg.newState();
+
+            // Generate the body of the linearized switch block.
+            List<Statement> stmts = new ArrayList<Statement>();
+            stmts.add(Generator.generateJump(arg.getCurrentState()));
+            SwitchEntryStmt entry = new SwitchEntryStmt(case_.getLabel(), stmts);
+            entries.add(entry);
+
+            // Generate the actual body.
+            case_.accept(this, arg);
+        }
+        arg.exitLabel();
+
+        // Create a new jump out of the switch.
+        arg.newState();
+        entryBlockStatements.add(Generator.generateJump(arg.getCurrentState()));
     }
 
     @Override
     public void visit(SwitchEntryStmt n, Generator arg) {
-        // TODO ugh, also need to figure this out
-        throw new TransformException("don't know how to linearize");
+        if (n.getStmts() == null) return;
+        for (Statement stmt : n.getStmts()) {
+           stmt.accept(this, arg);
+       }
     }
 
     @Override
@@ -613,6 +640,6 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         int startPoint = s.getCurrentState();
         n.getBody().accept(this, s);
         s.addStatement(Generator.generateJump(startPoint));
-        s.exitLoop();
+        s.exitLabel();
     }
 }
