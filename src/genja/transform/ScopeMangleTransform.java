@@ -37,7 +37,7 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
     /**
      * Enter a scope. This should be paired with exitBlock.
      */
-    void enterBlock() {
+    void enter() {
         this.block = new BlockScope(this.nextBlock, this.block);
         this.nextBlock = 0;
     }
@@ -45,19 +45,17 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
     /**
      * Exit a scope.
      */
-    void exitBlock() {
+    void exit() {
         this.nextBlock = this.block.num + 1;
         this.block = this.block.back;
     }
 
     @Override
     public Node visit(BlockStmt n, Map<String, TypedVariableDeclarator> arg) {
-        enterBlock();
-        try {
-            return super.visit(n, arg);
-        } finally {
-            exitBlock();
-        }
+        this.enter();
+        Node r = super.visit(n, arg);
+        this.exit();
+        return r;
     }
 
     @Override
@@ -73,6 +71,9 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
     public Node visit(VariableDeclarationExpr n, Map<String, TypedVariableDeclarator> s) {
         String prefix = this.block.getScopePrefix();
         for (VariableDeclarator d : n.getVars()) {
+            if (this.block.findScopeForVariable(d.getId().getName()) != null) {
+                throw new TransformException(d.getId().getName() + " already exists in scope");
+            }
             // We introduce the typed variable in two places: the full name in
             // map we're carrying around, and the scoped name in the block.
             TypedVariableDeclarator t = new TypedVariableDeclarator(n.getType(), d);

@@ -469,7 +469,7 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         arg.addStatement(new SwitchStmt(n.getSelector(), entries));
 
         List<Statement> entryBlockStatements = arg.getCurrentStateNode().getStmts();
-        
+
         // Generate all the switch cases.
         arg.enterSwitch();
         for (SwitchEntryStmt case_ : n.getEntries()) {
