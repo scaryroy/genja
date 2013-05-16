@@ -13,29 +13,45 @@ public class StupidFactors {
                     case 1:
                         s0$i = 0;
                     case 2:
-                    case 3:
                         if (!(s0$i < n)) if (true) {
+                            $state = 3;
+                            break;
+                        }
+                        if (true) {
                             $state = 4;
                             break;
                         }
+                    case 3:
                         if (true) {
-                            $state = 5;
+                            $state = 12;
+                            break;
+                        }
+                        if (true) {
+                            $state = 4;
                             break;
                         }
                     case 4:
-                        if (true) {
-                            $state = 16;
-                            break;
-                        }
-                        if (true) {
-                            $state = 5;
-                            break;
-                        }
-                    case 5:
                         s0$s0$s0$s0$j = 0;
-                    case 6:
-                    case 7:
+                    case 5:
                         if (!(s0$s0$s0$s0$j < m)) if (true) {
+                            $state = 6;
+                            break;
+                        }
+                        if (true) {
+                            $state = 7;
+                            break;
+                        }
+                    case 6:
+                        if (true) {
+                            $state = 11;
+                            break;
+                        }
+                        if (true) {
+                            $state = 7;
+                            break;
+                        }
+                    case 7:
+                        if (s0$i * s0$s0$s0$s0$j == x) if (true) {
                             $state = 8;
                             break;
                         }
@@ -53,43 +69,24 @@ public class StupidFactors {
                             break;
                         }
                     case 9:
-                        if (s0$i * s0$s0$s0$s0$j == x) if (true) {
-                            $state = 10;
-                            break;
-                        }
-                        if (true) {
-                            $state = 11;
-                            break;
-                        }
+                        $state = 10;
+                        $current = s0$i * s0$s0$s0$s0$j;
+                        return true;
                     case 10:
+                        ++s0$s0$s0$s0$j;
                         if (true) {
-                            $state = -1;
-                            break;
-                        }
-                        if (true) {
-                            $state = 11;
+                            $state = 5;
                             break;
                         }
                     case 11:
-                        $state = 12;
-                        $current = s0$i * s0$s0$s0$s0$j;
-                        return true;
-                    case 12:
-                        ++s0$s0$s0$s0$j;
-                        if (true) {
-                            $state = 6;
-                            break;
-                        }
-                    case 13:
-                    case 14:
                         ++s0$i;
                         if (true) {
                             $state = 2;
                             break;
                         }
-                    case 15:
-                    case 16:
-                    case 17:
+                    case 12:
+                    case 13:
+                    case 14:
                     case -1:
                         $state = -1;
                         return false;

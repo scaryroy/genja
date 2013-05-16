@@ -32,10 +32,7 @@ class Generator {
      */
     public static final NameExpr CURRENT_VAR = new NameExpr("$current");
 
-    /**
-     * The current loop we're transforming.
-     */
-    Label loop;
+    int loopNum = 0;
 
     /**
      * The current label we're in.
@@ -57,7 +54,6 @@ class Generator {
      */
     public Generator() {
         this.states = new ArrayList<SwitchEntryStmt>();
-        this.loop = null;
         this.label = null;
         this.labels = new HashMap<String, Label>();
 
@@ -98,24 +94,15 @@ class Generator {
      * Enter a loop. This should be paired with exitLoop to generate the appropriate jump out.
      */
     void enterLoop() {
-        this.loop = new Label(null, this.states.size(), this.loop);
-        this.newState();
+        this.enterLabel(".loop" + this.loopNum++);
+        this.label.loop = true;
     }
 
     /**
      * Exit a loop, rewriting the breaks and continues in the loop body.
      */
     void exitLoop() {
-        this.loop.breakPoint = this.states.size();
-
-        // We now want to rewrite all the continue and breaks using this loop marker.
-        for (int i = this.loop.continuePoint; i < this.loop.breakPoint; ++i) {
-            IntraLoopJumpTransform r = new IntraLoopJumpTransform(this);
-            this.states.get(i).accept(r, this.loop);
-        }
-
-        this.newState();
-        this.loop = this.loop.back;
+        this.exitLabel();
     }
 
     /**
@@ -151,7 +138,7 @@ class Generator {
      * Enter a label context corresponding to the current state.
      */
     void enterLabel(String name) {
-        this.label = new Label(name, this.getCurrentState(), this.label);
+        this.label = new Label(name, this.getCurrentState(), false, this.label);
         this.labels.put(name, this.label);
     }
 
@@ -159,21 +146,36 @@ class Generator {
      * Exit a label context.
      */
     void exitLabel() {
+        this.newState();
+        this.label.breakPoint = this.getCurrentState();
         this.label = this.label.back;
     }
 
-    /**
-     * Check if a delimited jump is possible to the given label.
-     */
-    boolean canJumpTo(String name) {
+    Label ancestralLabelFor(String name) {
         Label c = this.label;
         while (c != null) {
             if (c.name.equals(name)) {
-                return true;
+                return c;
             }
             c = c.back;
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * Check if a delimited break is possible to the given label.
+     */
+    boolean canBreakTo(String name) {
+        return this.ancestralLabelFor(name) != null;
+    }
+
+    /**
+     * We can only continue to loops, so we check if a label corresponds to a
+     * loop.
+     */
+    boolean canContinueTo(String name) {
+        Label label = this.ancestralLabelFor(name);
+        return label.loop && this.canBreakTo(name);
     }
     
     /**

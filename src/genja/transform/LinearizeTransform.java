@@ -105,7 +105,7 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
         // Transform all the eligible body nodes.
         n.getBody().accept(this, s);
-
+        
         // Create a trap state that the generator can never escape.
         s.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("-1"), new ArrayList<Statement>()));
         s.addStatement(Generator.generateDeferredJump(-1));
@@ -461,10 +461,10 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(BreakStmt n, Generator arg) {
         if (n.getId() == null) {
-            arg.addStatement(new BreakStmt(".loop"));
+            arg.addStatement(new BreakStmt(arg.label.name));
             return;
         }
-        if (!arg.canJumpTo(n.getId())) {
+        if (!arg.canBreakTo(n.getId())) {
             throw new TransformException("can't break to: " + n.getId());
         }
         arg.addStatement(n);
@@ -482,10 +482,10 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(ContinueStmt n, Generator arg) {
         if (n.getId() == null) {
-            arg.addStatement(new ContinueStmt(".loop"));
+            arg.addStatement(new ContinueStmt(arg.label.name));
             return;
         }
-        if (!arg.canJumpTo(n.getId())) {
+        if (!arg.canContinueTo(n.getId())) {
             throw new TransformException("can't continue to: " + n.getId());
         }
         arg.addStatement(n);
@@ -546,9 +546,17 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // Create a new state so we can jump back here, if necessary.
         s.newState();
         s.enterLabel(n.getLabel());
+
+        // Lookahead -- if the loop body is a canonical loop, the label is also
+        // a loop marker.
+        //
+        // TODO: This falls apart on desugared for loops -- but then again,
+        //       labeling on desugared for loops has always been super iffy.
+        if (n.getStmt().getClass().equals(ForStmt.class)) {
+            s.label.loop = true;
+        }
         n.getStmt().accept(this, s);
         s.newState();
-        s.label.breakPoint = s.getCurrentState();
         s.exitLabel();
     }
 
@@ -584,7 +592,6 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
         // Add a jump at the end of the if block to skip all bodies.
         entryStateNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
-
     }
 
     @Override
@@ -601,9 +608,9 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // We have an infinite loop, which is in the correct form for us to transform.
         s.enterLoop();
         s.newState();
+        int startPoint = s.getCurrentState();
         n.getBody().accept(this, s);
-        s.addStatement(s.loop.generateContinueJump());
-        s.newState();
+        s.addStatement(Generator.generateJump(startPoint));
         s.exitLoop();
     }
 }

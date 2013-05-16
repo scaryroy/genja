@@ -10,37 +10,36 @@ public class Range {
                     case 0:
                         s0$i = start;
                     case 1:
-                    case 2:
                         if (!(s0$i < stop)) if (true) {
+                            $state = 2;
+                            break;
+                        }
+                        if (true) {
                             $state = 3;
                             break;
                         }
+                    case 2:
                         if (true) {
-                            $state = 4;
+                            $state = 5;
+                            break;
+                        }
+                        if (true) {
+                            $state = 3;
                             break;
                         }
                     case 3:
-                        if (true) {
-                            $state = 7;
-                            break;
-                        }
-                        if (true) {
-                            $state = 4;
-                            break;
-                        }
-                    case 4:
-                        $state = 5;
+                        $state = 4;
                         $current = s0$i;
                         return true;
-                    case 5:
+                    case 4:
                         s0$i += step;
                         if (true) {
                             $state = 1;
                             break;
                         }
-                    case 6:
-                    case 7:
-                        $state = 7;
+                    case 5:
+                    case -1:
+                        $state = -1;
                         return false;
                 }
             }
