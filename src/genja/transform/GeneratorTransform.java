@@ -1,5 +1,6 @@
 package genja.transform;
 
+import genja.CompilerSettings;
 import genja.transform.BlockScope.TypedVariableDeclarator;
 
 import java.util.ArrayList;
@@ -32,12 +33,18 @@ public class GeneratorTransform extends GenericVisitorAdapter<MethodDeclaration,
 
         // Desugar ALL the loops!
         n.accept(new LoopDesugarTransform(), null);
+        if (CompilerSettings.dumpDesugar) {
+            System.err.println(n);
+        }
 
         Generator g = new Generator();
         Map<String, TypedVariableDeclarator> vars = new HashMap<String, TypedVariableDeclarator>();
 
         // Mangle all our scope variables.
         n.accept(new ScopeMangleTransform(), vars);
+        if (CompilerSettings.dumpMangle) {
+            System.err.println(n);
+        }
 
         // Generate the body.
         n.accept(new LinearizeTransform(), g);

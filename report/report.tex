@@ -382,6 +382,124 @@ case 3:
     postamble;
 \end{pygmented}
 
+\subsubsection{\texttt{switch} (with \texttt{default})}
+
+\begin{pygmented}{java}
+preamble;
+switch (x) {
+    case A:
+        body-a;
+        break;
+
+    case B:
+        body-b;
+
+    case C:
+    case D:
+        body-d;
+        break;
+
+    default:
+        body-default;
+}
+postamble;
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+case 0:
+    preamble;
+case 1:
+    switch (x) {
+        case A:
+            state = 2;
+            break;
+        case B:
+            state = 3;
+            break;
+        case C:
+        case D:
+            state = 4;
+            break;
+        default:
+            state = 5;
+            break;
+    }
+    break;
+case 2:
+    body-a;
+    state = 6;
+    break;
+case 3:
+    body-b;
+case 4:
+    body-d;
+    state = 6;
+    break;
+case 5:
+    body-default;
+case 6:
+    postamble;
+\end{pygmented}
+
+
+\subsubsection{\texttt{switch} (without \texttt{default})}
+
+\begin{pygmented}{java}
+preamble;
+switch (x) {
+    case A:
+        body-a;
+        break;
+
+    case B:
+        body-b;
+
+    case C:
+    case D:
+        body-d;
+        break;
+}
+postamble;
+\end{pygmented}
+
+becomes:
+
+\begin{pygmented}{java}
+case 0:
+    preamble;
+case 1:
+    switch (x) {
+        case A:
+            state = 2;
+            break;
+        case B:
+            state = 3;
+            break;
+        case C:
+        case D:
+            state = 4;
+            break;
+        default:
+            state = 5;
+            break;
+    }
+    break;
+case 2:
+    body-a;
+    state = 6;
+    break;
+case 3:
+    body-b;
+case 4:
+    body-d;
+    state = 6;
+    break;
+case 5:
+    postamble;
+\end{pygmented}
+
 \subsubsection{\texttt{yield}}
 
 \begin{pygmented}{java}
@@ -402,6 +520,5 @@ case 1:
 case 2:
     postamble;
 \end{pygmented}
-
 
 \end{document}

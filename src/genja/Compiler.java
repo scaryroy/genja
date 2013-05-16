@@ -25,6 +25,20 @@ public class Compiler extends ModifierVisitorAdapter<Void> {
     }
     
     public static void main(String[] args) throws Exception {
+        for (String arg : args) {
+            if (arg.equals("-ddump-desugar")) {
+                CompilerSettings.dumpDesugar = true;
+            }
+
+            if (arg.equals("-ddump-jump-free")) {
+                CompilerSettings.dumpJumpFree = true;
+            }
+
+            if (arg.equals("-ddump-mangle")) {
+                CompilerSettings.dumpMangle = true;
+            }
+        }
+
         CompilationUnit cu = JavaParser.parse(System.in);
         cu.accept(new Compiler(), null);
         DumpVisitor d = new DumpVisitor();

@@ -88,15 +88,14 @@ public class LoopDesugarTransform extends ModifierVisitorAdapter<Void> {
         this.lastLabelChild = n.getStmt();
         this.lastLabelName = n.getLabel();
         n = (LabeledStmt) super.visit(n, arg);
-        try {
-            if (this.labelRequiresRemoving) {
-                return n.getStmt();
-            } else {
-                return n;
-            }
-        } finally {
-            this.labelRequiresRemoving = false;
+        Node r;
+        if (this.labelRequiresRemoving) {
+            r = n.getStmt();
+        } else {
+            r = n;
         }
+        this.labelRequiresRemoving = false;
+        return r;
     }
 
     @Override

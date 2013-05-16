@@ -32,6 +32,9 @@ class Generator {
      */
     public static final NameExpr CURRENT_VAR = new NameExpr("$current");
 
+    /**
+     * Current implicit loop label number.
+     */
     int loopNum = 0;
 
     /**
@@ -151,6 +154,9 @@ class Generator {
         this.label = this.label.back;
     }
 
+    /**
+     * Find an ancestral break and continue point for a given label.
+     */
     Label ancestralLabelFor(String name) {
         Label c = this.label;
         while (c != null) {

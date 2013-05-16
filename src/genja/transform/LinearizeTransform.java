@@ -1,5 +1,7 @@
 package genja.transform;
 
+import genja.CompilerSettings;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,6 +114,10 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         s.addStatement(new ReturnStmt(new BooleanLiteralExpr(false)));
 
         for (SwitchEntryStmt st : s.states) {
+            if (CompilerSettings.dumpJumpFree) {
+                System.err.print(st);
+            }
+
             // Transform labeled breaks.
             st.accept(new LabeledJumpTransform(), s);
         }
