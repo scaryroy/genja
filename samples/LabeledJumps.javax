@@ -1,0 +1,15 @@
+import java.util.Iterator;
+
+public class LabeledJumps {
+    public static Integer* makeStupidLoop() {
+        x: while (true) { yield 1; continue x; }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Iterator<Integer> s = makeStupidLoop();
+
+        for (int i = 0; i < 10; ++i) {
+            System.out.println(s.next());
+        }
+    }
+}

@@ -70,6 +70,12 @@ As such, automated conversion can be employed from other forms of loops (such as
 \texttt{for} and \texttt{do}). For a full list of conversions from canonical loop forms, refer to
 appendix~\ref{appendix:canonical-loop-forms}.
 
+In the special case of a non-canonical \texttt{for} loop, we may need to move an outer label into
+the inner canonical \texttt{for} loop. This is facilitated by remembering the position of labels
+before entering their statement nodes as well as which statement node was entered then, during
+processing of the statement node, we can indicate that we have moved the label into a loop and that
+the label needs to be removed.
+
 \subsection{Scope Mangling}
 
 Java employs block-level scoping for variables -- for example, variables declared inside an
@@ -170,10 +176,9 @@ current value emitted by the state machine and then return \texttt{true} from th
 signify that the current value has changed.
 
 We keep track of two things during linearization: labels and loops. A loop can be considered an
-implicit label, but we eliminate them immediately at the end of a loop block linearization. A label
-refers to a statement that can be jumped to, but only from a child statement of the labeled
-statement. With loop and label state, the following conditions apply to the linearization
-transformer:
+implicit label that is given a name using the enumeration order. A label refers to a statement that
+can be jumped to, but only from a child statement of the labeled statement. With loop and label
+state, the following conditions apply to the linearization transformer:
 
 \begin{itemize}
 \item When the transformer encounters a label statement, we push the label onto the stack of labels
@@ -187,30 +192,19 @@ child \texttt{break} and \texttt{continue} statements, we verify that we only ev
 \item When the transformer encounters a canonical loop, we repeat the same procedure we did with
 the labels with the exception that we do not add them to the map of labels, nor do we name the loop
 labels. The transformer will then transform any label-less \texttt{break} and \texttt{continue}
-statements it finds into labeled ones, using the special label \texttt{.loop} to denote the current
-loop. After the transformer exits the canonical loop, it runs intra-loop jump resolution (see
-section~\ref{section:intra-loop-jump-resolution}).
+statements it finds into labeled ones, using special labels prefixed with \texttt{.loop}, followed
+by the loop number as dictated by enumeration order.
 \end{itemize}
 
 After all the code has been linearized, we create a trap state that always deferred-jumps to itself
 and returns \texttt{false}. This ensures we don't execute random code in the state machine.
 
-In order to resolve jumps, we employ two techniques:
-
-\subsubsection{Intra-Loop Jump Resolution} \label{section:intra-loop-jump-resolution}
-
-Once we have fully linearized a canonical loop block, the \texttt{break} and \texttt{continue}
-statements inside them can be dereferenced appropriately. When we encounter \texttt{break .loop},
-we emit a jump to the loop's end point (also known as the \emph{break point}). Likewise, when we
-encounter \texttt{continue .loop}, we emit a jump to the loop's start point (or \emph{continue
-point}).
-
 \subsubsection{Labeled Jump Resolution}
 
 The initial linearization pass should have already verified that we aren't performing jumps to
 non-ancestral blocks. As such, we just look up labels in the linearization context and generate
-jumps to them for \texttt{break} statements. \texttt{continue} statements are not supported, and
-use of them is a semantic error.
+jumps to them for \texttt{break} statements. We do the same for \texttt{continue} statements,
+except we use the continue points instead of the break points.
 
 At this point, we expect no more \texttt{break}s or \texttt{continue}s that haven't been
 dereferenced.
@@ -275,7 +269,7 @@ Here are the canonical loop forms for various types of loops.
 \subsubsection{\texttt{while}}
 
 \begin{pygmented}{java}
-while (pred) {
+label: while (pred) {
     body;
 }
 \end{pygmented}
@@ -283,7 +277,7 @@ while (pred) {
 becomes:
 
 \begin{pygmented}{java}
-for (;;) {
+label: for (;;) {
     if (!pred) break; body;
 }
 \end{pygmented}
@@ -291,7 +285,7 @@ for (;;) {
 \subsubsection{\texttt{do}}
 
 \begin{pygmented}{java}
-do {
+label: do {
     body;
 } while (pred)
 \end{pygmented}
@@ -299,7 +293,7 @@ do {
 becomes:
 
 \begin{pygmented}{java}
-for (;;) {
+label: for (;;) {
     body; if (!pred) break;
 }
 \end{pygmented}
@@ -307,7 +301,7 @@ for (;;) {
 \subsubsection{\texttt{for} (non-canonical loop)}
 
 \begin{pygmented}{java}
-for (init; pred; update) {
+label: for (init; pred; update) {
     body;
 }
 \end{pygmented}
@@ -317,7 +311,7 @@ becomes:
 \begin{pygmented}{java}
 {
     init;
-    for (;;) {
+    label: for (;;) {
         if (!pred) break; body;
         update;
     }
