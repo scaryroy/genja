@@ -37,6 +37,10 @@ public class Compiler extends ModifierVisitorAdapter<Void> {
             if (arg.equals("-ddump-mangle")) {
                 CompilerSettings.dumpMangle = true;
             }
+
+            if (arg.equals("-ddump-states")) {
+                CompilerSettings.dumpStates = true;
+            }
         }
 
         CompilationUnit cu = JavaParser.parse(System.in);

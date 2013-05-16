@@ -6,4 +6,5 @@ public final class CompilerSettings {
     public static boolean dumpDesugar = false;
     public static boolean dumpJumpFree = false;
     public static boolean dumpMangle = false;
+    public static boolean dumpStates = false;
 }
