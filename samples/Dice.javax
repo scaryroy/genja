@@ -1,0 +1,36 @@
+import java.util.Random;
+
+public class Dice {
+    public static String* makeDie(final int rolls) {
+        Random rand = new Random();
+        for (int i = 0; i < rolls; ++i) {
+            switch (rand.nextInt(6) + 1) {
+                case 1:
+                    yield "One, how low!";
+                    break;
+                case 2:
+                    yield "Two, not too bad!";
+                    break;
+                case 3:
+                    yield "Three, pretty good!";
+                    break;
+                case 4:
+                    yield "Four, now we're cooking!";
+                    break;
+                case 5:
+                    yield "Five, fantastic!";
+                    break;
+                case 6:
+                    yield "Six!!";
+                    break;
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (String msg : makeDie(10)) {
+            System.out.println(msg);
+            Thread.sleep(100);
+        }
+    }
+}
