@@ -242,31 +242,6 @@ set to true. If the stale flag is not set, we simply return the last state machi
 the current value yielded from the state machine and set the stale flag to true.
 \end{itemize}
 
-\section{Known Issues}
-
-Due to the time constraints of this assignment, the following non-essential features have been
-considered but not implemented. I believe sufficient functionality has been supplied in the
-implementation provided for a useful implementation of generators.
-
-\begin{itemize}
-\item Duplicate state elimination. The linearization pass generates states at each point where
-      execution could jump to or be resumed at. These are often duplicated and can be eliminated
-      after linearization.
-
-\item Unreachable jump elimination. Occasionally, the linearization pass generates unconditional
-      jumps directly after unconditional jumps. These, of course, have no effect and can be
-      removed.
-
-\item Selective loop desugaring. Currently, all loops are desugared. This could be eliminated with
-      an additional annotation pass before desugaring, and making the desugaring pass aware of
-      annotations.
-
-\item Selective loop linearization. Currently, all loops (except for infinite ones) are linearized
-      completely. This is because the node annotator chooses to mark \texttt{break} and
-      \texttt{continue} as statements that require a linearized block -- as these statements can
-      jump into linearized code from a non-linearized block.
-\end{itemize}
-
 \section{Conclusion}
 
 Through a multi-pass compilation process, we can effectively generate state machines in Java via

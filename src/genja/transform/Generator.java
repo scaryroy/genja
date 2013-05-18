@@ -8,14 +8,14 @@ import java.util.Map;
 import japa.parser.ast.body.Parameter;
 import japa.parser.ast.body.VariableDeclaratorId;
 import japa.parser.ast.expr.AssignExpr;
-import japa.parser.ast.expr.BooleanLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.BreakStmt;
 import japa.parser.ast.stmt.CatchClause;
+import japa.parser.ast.stmt.ContinueStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
-import japa.parser.ast.stmt.IfStmt;
+import japa.parser.ast.stmt.ReturnStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.SwitchEntryStmt;
 import japa.parser.ast.stmt.SwitchStmt;
@@ -108,8 +108,7 @@ class Generator {
         List<Statement> stmts = new ArrayList<Statement>();
         stmts.add(generateDeferredJump(state));
         stmts.add(new BreakStmt(null));
-        return new IfStmt(new BooleanLiteralExpr(true),
-                          new BlockStmt(stmts), null);
+        return new BlockStmt(stmts);
     }
 
     /**
@@ -153,7 +152,20 @@ class Generator {
      * Add a statement to the given state.
      */
     void addStatement(int state, Statement stmt) {
-        this.states.get(state).getStmts().add(stmt);
+        List<Statement> stmts = this.states.get(state).getStmts();
+
+        if (stmts.size() > 0) {
+            Statement lastStmt = stmts.get(stmts.size() - 1);
+            // Preemptively eliminate dead code.
+            if (lastStmt.getClass().equals(ReturnStmt.class) ||
+                lastStmt.getClass().equals(ThrowStmt.class) ||
+                lastStmt.getClass().equals(BreakStmt.class) ||
+                lastStmt.getClass().equals(ContinueStmt.class)) {
+                return;
+            }
+        }
+
+        stmts.add(stmt);
     }
 
     /**
