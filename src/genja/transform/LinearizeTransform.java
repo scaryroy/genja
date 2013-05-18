@@ -140,11 +140,9 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(YieldStmt n, Generator s) {
         // Remember the state to add the deferred jump to.
-        SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
-
+        List<Statement> stmts = s.getCurrentStateStatements();
         s.newState();
 
-        List<Statement> stmts = entryStateNode.getStmts();
         stmts.add(Generator.generateDeferredJump(s.getCurrentState()));
         stmts.add(new ExpressionStmt(new AssignExpr(Generator.CURRENT_VAR,
                                                     n.getExpr(),
@@ -470,7 +468,7 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // Switch jump.
         arg.addStatement(new SwitchStmt(n.getSelector(), entries));
 
-        SwitchEntryStmt entryStateNode = arg.getCurrentStateNode();
+        List<Statement> entryStateStmts = arg.getCurrentStateStatements();
         
         boolean hasDefault = false;
 
@@ -504,7 +502,7 @@ class LinearizeTransform implements VoidVisitor<Generator> {
             entries.add(entry);
         }
         
-        entryStateNode.getStmts().add(new BreakStmt());
+        entryStateStmts.add(new BreakStmt());
     }
 
     @Override
@@ -576,11 +574,11 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         arg.currentTryState = arg.getCurrentState();
 
         n.getTryBlock().accept(this, arg);
-        SwitchEntryStmt entryStateNode = arg.getCurrentStateNode();
+        List<Statement> entryStateStmts = arg.getCurrentStateStatements();
         for (CatchClause c : n.getCatchs()) {
             c.accept(this, arg);
         }
-        entryStateNode.getStmts().add(Generator.generateJump(arg.getCurrentState()));
+        entryStateStmts.add(Generator.generateJump(arg.getCurrentState()));
 
         arg.currentTryState = oldTryState;
     }
@@ -631,11 +629,11 @@ class LinearizeTransform implements VoidVisitor<Generator> {
     @Override
     public void visit(IfStmt n, Generator s) {
         // Remember the state if should be executed in.
-        SwitchEntryStmt entryStateNode = s.getCurrentStateNode();
+        List<Statement> entryStateStmts = s.getCurrentStateStatements();
 
         // Create a node for the consequent.
         s.newState();
-        SwitchEntryStmt consequentNode = s.getCurrentStateNode();
+        List<Statement> consequentStmts = s.getCurrentStateStatements();
 
         // Create the consequent jump.
         Statement consequentJump = Generator.generateJump(s.getCurrentState());
@@ -651,15 +649,15 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         }
 
         s.newState();
-        consequentNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
+        consequentStmts.add(Generator.generateJump(s.getCurrentState()));
 
         // Add the if into the node we remembered.
-        entryStateNode.getStmts().add(new IfStmt(n.getCondition(),
-                                                 consequentJump,
-                                                 alternateJump == null ? null : alternateJump));
+        entryStateStmts.add(new IfStmt(n.getCondition(),
+                                       consequentJump,
+                                       alternateJump == null ? null : alternateJump));
 
         // Add a jump at the end of the if block to skip all bodies.
-        entryStateNode.getStmts().add(Generator.generateJump(s.getCurrentState()));
+        entryStateStmts.add(Generator.generateJump(s.getCurrentState()));
     }
 
     @Override

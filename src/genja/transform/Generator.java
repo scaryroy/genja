@@ -138,9 +138,9 @@ class Generator {
     /**
      * Get the current state node.
      */
-    SwitchEntryStmt getCurrentStateNode() {
+    List<Statement> getCurrentStateStatements() {
         if (this.getCurrentState() == -1) return null;
-        return this.states.get(this.getCurrentState());
+        return this.states.get(this.getCurrentState()).getStmts();
     }
 
     /**
@@ -154,14 +154,14 @@ class Generator {
      * Add a statement to the current state.
      */
     void addStatement(Statement stmt) {
-        this.getCurrentStateNode().getStmts().add(stmt);
+        this.getCurrentStateStatements().add(stmt);
     }
 
     /**
      * Add a statement to the current state.
      */
     void addAllStatements(List<Statement> stmts) {
-        this.getCurrentStateNode().getStmts().addAll(stmts);
+        this.getCurrentStateStatements().addAll(stmts);
     }
 
     /**
