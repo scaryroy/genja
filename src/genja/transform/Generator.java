@@ -136,14 +136,6 @@ class Generator {
     }
 
     /**
-     * Get the current state node.
-     */
-    List<Statement> getCurrentStateStatements() {
-        if (this.getCurrentState() == -1) return null;
-        return this.states.get(this.getCurrentState()).getStmts();
-    }
-
-    /**
      * Get the current state number.
      */
     int getCurrentState() {
@@ -154,14 +146,30 @@ class Generator {
      * Add a statement to the current state.
      */
     void addStatement(Statement stmt) {
-        this.getCurrentStateStatements().add(stmt);
+        this.addStatement(this.getCurrentState(), stmt);
     }
 
     /**
-     * Add a statement to the current state.
+     * Add a statement to the given state.
+     */
+    void addStatement(int state, Statement stmt) {
+        this.states.get(state).getStmts().add(stmt);
+    }
+
+    /**
+     * Add some statements to the current state.
      */
     void addAllStatements(List<Statement> stmts) {
-        this.getCurrentStateStatements().addAll(stmts);
+        this.addAllStatements(this.getCurrentState(), stmts);
+    }
+
+    /**
+     * Add some statement to the given state.
+     */
+    void addAllStatements(int state, List<Statement> stmts) {
+        for (Statement stmt : stmts) {
+            this.addStatement(state, stmt);
+        }
     }
 
     /**
