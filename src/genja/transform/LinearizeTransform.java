@@ -462,26 +462,25 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         // Create a list of entries to populate later.
         List<SwitchEntryStmt> entries = new ArrayList<SwitchEntryStmt>();
 
-        // Switch jump, setting the switch jump flag to false.
-        arg.addStatement(new ExpressionStmt(new AssignExpr(Generator.SWITCH_JUMP_VAR,
-                                                           new BooleanLiteralExpr(false),
-                                                           AssignExpr.Operator.assign)));
+        // Switch jump.
         arg.addStatement(new SwitchStmt(n.getSelector(), entries));
 
-        List<Statement> entryBlockStatements = arg.getCurrentStateNode().getStmts();
+        SwitchEntryStmt entryStateNode = arg.getCurrentStateNode();
+        
+        boolean hasDefault = false;
 
         // Generate all the switch cases.
         arg.enterSwitch();
         for (SwitchEntryStmt case_ : n.getEntries()) {
+            if (case_.getLabel() == null) {
+                hasDefault = true;
+            }
+
             arg.newState();
 
             // Generate the body of the linearized switch block.
             List<Statement> stmts = new ArrayList<Statement>();
 
-            // Set the switch-jump flag to true;
-            stmts.add(new ExpressionStmt(new AssignExpr(Generator.SWITCH_JUMP_VAR,
-                                                        new BooleanLiteralExpr(true),
-                                                        AssignExpr.Operator.assign)));
             stmts.add(Generator.generateJump(arg.getCurrentState()));
             SwitchEntryStmt entry = new SwitchEntryStmt(case_.getLabel(), stmts);
             entries.add(entry);
@@ -491,11 +490,16 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         }
         arg.exitLabel();
 
-        // Create a new jump out of the switch.
-        entryBlockStatements.add(new IfStmt(new UnaryExpr(Generator.SWITCH_JUMP_VAR, UnaryExpr.Operator.not),
-                                            Generator.generateDeferredJump(arg.getCurrentState()),
-                                            null));
-        entryBlockStatements.add(new BreakStmt());
+        // If no default entry was found, we make one that just jumps to the
+        // block after the switch.
+        if (!hasDefault) {
+            List<Statement> stmts = new ArrayList<Statement>();
+            stmts.add(Generator.generateJump(arg.getCurrentState()));
+            SwitchEntryStmt entry = new SwitchEntryStmt(null, stmts);
+            entries.add(entry);
+        }
+        
+        entryStateNode.getStmts().add(new BreakStmt());
     }
 
     @Override

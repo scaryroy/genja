@@ -420,28 +420,21 @@ becomes:
 \begin{pygmented}{java}
 case 0:
     preamble;
-    switchJump = false;
     switch (x) {
         case A:
-            switchJump = true;
             state = 1;
             break;
         case B:
-            switchJump = true;
             state = 2;
             break;
         case C:
-        case D:
-            switchJump = true;
             state = 3;
-            break;
-        default:
-            switchJump = true;
+        case D:
             state = 4;
             break;
-    }
-    if (!switchJump) {
-        state = 5;
+        default:
+            state = 5;
+            break;
     }
     break;
 case 1:
@@ -487,27 +480,22 @@ becomes:
 \begin{pygmented}{java}
 case 0:
     preamble;
-    switchJump = false;
     switch (x) {
         case A:
-            switchJump = true;
             state = 1;
             break;
         case B:
-            switchJump = true;
             state = 2;
             break;
         case C:
-            switchJump = true;
             state = 3;
             break;
         case D:
-            switchJump = true;
             state = 4;
             break;
-    }
-    if (!switchJump) {
-        state = 4;
+        default:
+            state = 5;
+            break;
     }
     break;
 case 1:
