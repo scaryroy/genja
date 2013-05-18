@@ -113,11 +113,6 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         s.addStatement(Generator.generateDeferredJump(-1));
         s.addStatement(new ReturnStmt(new BooleanLiteralExpr(false)));
 
-        // Create an exceptional trap state.
-        s.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("-2"), new ArrayList<Statement>()));
-        s.addStatement(new ThrowStmt(Generator.EXCEPTION_VAR));
-
-        
         for (SwitchEntryStmt st : s.states) {
             if (CompilerSettings.dumpJumpFree) {
                 System.err.print(st);

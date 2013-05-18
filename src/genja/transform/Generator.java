@@ -268,11 +268,10 @@ class Generator {
             }
 
             List<Statement> handlerStmts = new ArrayList<Statement>();
-            handlerStmts.add(new ExpressionStmt(new AssignExpr(Generator.STATE_VAR, new IntegerLiteralExpr("-2"), AssignExpr.Operator.assign)));
+            handlerStmts.add(Generator.generateDeferredJump(-1));
             handlerStmts.add(new ThrowStmt(EXCEPTION_VAR));
             entries.add(new SwitchEntryStmt(null, handlerStmts));
 
-            
             List<Statement> stmts = new ArrayList<Statement>();
             stmts.add(new ExpressionStmt(new AssignExpr(Generator.EXCEPTION_VAR, new NameExpr("e"), AssignExpr.Operator.assign)));
             stmts.add(new SwitchStmt(Generator.STATE_VAR, entries));
