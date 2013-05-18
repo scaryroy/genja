@@ -262,7 +262,7 @@ class Generator {
 
             for (Map.Entry<Integer, ExceptionHandler> handlerEntry : typeEntry.getValue().entrySet()) {
                 List<Statement> handlerStmts = new ArrayList<Statement>();
-                handlerStmts.add(new ExpressionStmt(new AssignExpr(new NameExpr(handlerEntry.getValue().name), new NameExpr("e"), AssignExpr.Operator.assign)));
+                handlerStmts.add(new ExpressionStmt(new AssignExpr(new NameExpr(handlerEntry.getValue().name), Generator.EXCEPTION_VAR, AssignExpr.Operator.assign)));
                 handlerStmts.add(Generator.generateJump(handlerEntry.getValue().catchPoint));
                 entries.add(new SwitchEntryStmt(new IntegerLiteralExpr("" + handlerEntry.getKey()), handlerStmts));
             }
