@@ -113,6 +113,11 @@ class LinearizeTransform implements VoidVisitor<Generator> {
         s.addStatement(Generator.generateDeferredJump(-1));
         s.addStatement(new ReturnStmt(new BooleanLiteralExpr(false)));
 
+        // Create an exceptional trap state.
+        s.states.add(new SwitchEntryStmt(new IntegerLiteralExpr("-2"), new ArrayList<Statement>()));
+        s.addStatement(new ThrowStmt(Generator.EXCEPTION_VAR));
+
+        
         for (SwitchEntryStmt st : s.states) {
             if (CompilerSettings.dumpJumpFree) {
                 System.err.print(st);
@@ -567,14 +572,28 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(TryStmt n, Generator arg) {
-        // TODO Auto-generated method stub
+        int oldTryState = arg.currentTryState;
+        arg.currentTryState = arg.getCurrentState();
 
+        n.getTryBlock().accept(this, arg);
+        SwitchEntryStmt entryStateNode = arg.getCurrentStateNode();
+        for (CatchClause c : n.getCatchs()) {
+            c.accept(this, arg);
+        }
+        entryStateNode.getStmts().add(Generator.generateJump(arg.getCurrentState()));
+
+        arg.currentTryState = oldTryState;
     }
 
     @Override
     public void visit(CatchClause n, Generator arg) {
-        // TODO Auto-generated method stub
-
+        arg.newState();
+        int catchPoint = arg.getCurrentState();
+        arg.addStatement(new ExpressionStmt(new AssignExpr(new NameExpr(n.getExcept().getId().getName()), new CastExpr(n.getExcept().getType(), Generator.EXCEPTION_VAR), AssignExpr.Operator.assign)));
+        n.getCatchBlock().accept(this, arg);
+        arg.addExceptionHandler(n.getExcept().getType(), arg.currentTryState,
+                                new ExceptionHandler(n.getExcept().getId().getName(),
+                                                     catchPoint));
     }
 
     @Override

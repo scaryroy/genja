@@ -10,7 +10,9 @@ import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.CatchClause;
 import japa.parser.ast.stmt.ExpressionStmt;
+import japa.parser.ast.type.Type;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
 /**
@@ -50,6 +52,20 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
         this.block = this.block.back;
     }
 
+    String introduce(VariableDeclarator d, Type t, Map<String, TypedVariableDeclarator> s) {
+        String prefix = this.block.getScopePrefix();
+        if (this.block.findScopeForVariable(d.getId().getName()) != null) {
+            throw new TransformException(d.getId().getName() + " already exists in scope");
+        }
+        // We introduce the typed variable in two places: the full name in
+        // map we're carrying around, and the scoped name in the block.
+        TypedVariableDeclarator tv = new TypedVariableDeclarator(t, d);
+        s.put(prefix + d.getId().getName(), tv);
+        this.block.vars.put(d.getId().getName(), tv);
+
+        return prefix + d.getId().getName();
+    }
+
     @Override
     public Node visit(BlockStmt n, Map<String, TypedVariableDeclarator> arg) {
         this.enter();
@@ -69,16 +85,8 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
 
     @Override
     public Node visit(VariableDeclarationExpr n, Map<String, TypedVariableDeclarator> s) {
-        String prefix = this.block.getScopePrefix();
         for (VariableDeclarator d : n.getVars()) {
-            if (this.block.findScopeForVariable(d.getId().getName()) != null) {
-                throw new TransformException(d.getId().getName() + " already exists in scope");
-            }
-            // We introduce the typed variable in two places: the full name in
-            // map we're carrying around, and the scoped name in the block.
-            TypedVariableDeclarator t = new TypedVariableDeclarator(n.getType(), d);
-            s.put(prefix + d.getId().getName(), t);
-            this.block.vars.put(d.getId().getName(), t);
+            this.introduce(d, n.getType(), s);
         }
         return null;
     }
@@ -91,5 +99,17 @@ public class ScopeMangleTransform extends ModifierVisitorAdapter<Map<String, Typ
         }
         String name = block.getScopePrefix() + n.getName();
         return new NameExpr(name);
+    }
+
+    @Override
+    public Node visit(CatchClause n, Map<String, TypedVariableDeclarator> s) {
+        this.enter();
+        String name = this.introduce(new VariableDeclarator(n.getExcept().getId()),
+                                     n.getExcept().getType(),
+                                     s);
+        CatchClause r = (CatchClause) super.visit(n, s);
+        r.getExcept().getId().setName(name);
+        this.exit();
+        return r;
     }
 }

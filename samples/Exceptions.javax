@@ -1,0 +1,25 @@
+public class Exceptions {
+    public static String* makeExceptions() {
+        try {
+            try {
+                if (true) throw new RuntimeException(":V #1");
+            } catch (RuntimeException e) {
+                yield "try within a try: " + e.toString();
+            }
+        } catch (RuntimeException e) {
+            yield "THIS IS A BUG";
+        }
+        try {
+            if (true) throw new RuntimeException(":V #2");
+        } catch (RuntimeException e) {
+            yield "catch behind a catch: " + e.toString();
+        }
+        if (true) throw new RuntimeException("\n\nTHIS EXCEPTION IS NOT AN ERROR! READ THE SOURCE FOR INFO!\n");
+    }
+
+    public static void main(String[] args) throws Exception {
+        for (String estr : makeExceptions()) {
+            System.out.println("Caught exception? " + estr);
+        }
+    }
+}

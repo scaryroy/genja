@@ -38,6 +38,7 @@ public abstract class Generator<T> implements Iterator<T>, Iterable<T> {
 
     protected int $state = 0;
     protected T $current = null;
+    protected RuntimeException $exception = null;
 
     private boolean stale = true;
     private boolean last = true;

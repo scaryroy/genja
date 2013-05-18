@@ -194,13 +194,22 @@ child \texttt{break} and \texttt{continue} statements, we verify that we only ev
 \texttt{break} or \texttt{continue} to labels found in parent node. If a label is directly adjacent
 to a loop, the label is marked as being a loop label (and consequently allows \texttt{continue}s).
 
-\item When the transformer encounters a canonical loop, we repeat the same procedure we did with
-the labels with the exception that we do not add them to the map of labels, nor do we name the loop
-labels. The transformer will then transform any label-less \texttt{break} and \texttt{continue}
-statements it finds into labeled ones, using special labels prefixed with \texttt{.loop}, followed
-by the loop number as dictated by enumeration order. We only allow \texttt{continue} statements
-to jump to an ancestral loop block.
+\item When the transformer encounters a canonical loop or a switch statement, we repeat the same
+procedure we did with the labels. The transformer will then transform any label-less \texttt{break}
+and \texttt{continue} statements it finds into labeled ones, using special labels prefixed with
+\texttt{.loop} or \texttt{.switch} for loops and switches, respectively, followed by the block
+number as dictated by enumeration order. We only allow \texttt{continue} statements to jump to an
+ancestral loop block.
 \end{itemize}
+
+The transformer also translates \texttt{try}-\texttt{catch} statements. Linearization is a variant
+of continuation-passing style transformation, so, as such, it would be reasonable to say that the
+state machine linearization generates is isomorphic with continuations. Exceptions are a subset of
+continuations -- they represent a non-local jump into another code block. Therefore, we can catch
+all exceptions outside of the state machine and, upon encountering an exception, redirect control
+flow to the appropriate catch state inside the state machine -- manually forwarding exceptions via
+the state machine's continuations. In the case of nested \texttt{catch}es, we always let the
+innermost \texttt{catch}es take precedence.
 
 After all the code has been linearized, we create a trap state that always deferred-jumps to itself
 and returns \texttt{false}. This ensures we don't execute random code in the state machine.
@@ -240,13 +249,6 @@ considered but not implemented. I believe sufficient functionality has been supp
 implementation provided for a useful implementation of generators.
 
 \begin{itemize}
-\item \texttt{try-catch-finally}. As the generator enables pausing code at arbitrary points, we can
-      enclose execution of the generator in an overarching \texttt{try} statement, and jump into
-      \texttt{catch} clauses when an exception is encountered. Indeed, linearization is a variant
-      of a continuation-passing style transform, and exceptions are variants of non-local jumps --
-      consequently, we can use linearization-equivalent continuations (states) to represent
-      non-local jumps and, in turn, to represent exceptions.
-
 \item Duplicate state elimination. The linearization pass generates states at each point where
       execution could jump to or be resumed at. These are often duplicated and can be eliminated
       after linearization.
