@@ -1,14 +1,20 @@
 public class Exceptions {
     public static String* makeExceptions() {
         try {
-            try {
-                throw new RuntimeException(":V #1");
-            } catch (RuntimeException e) {
-                yield "try within a try: " + e.toString();
+            switch (1) {
+                case 1:
+                case 0:
+                    try {
+                        throw new RuntimeException(":V #1");
+                    } catch (RuntimeException e) {
+                        yield "try within a try: " + e.toString();
+                    }
             }
         } catch (RuntimeException e) {
             yield "THIS IS A BUG";
         }
+        a();
+
         try {
             throw new RuntimeException(":V #2");
         } catch (RuntimeException e) {

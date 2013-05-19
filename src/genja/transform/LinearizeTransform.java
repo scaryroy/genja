@@ -502,10 +502,15 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(SwitchEntryStmt n, Generator arg) {
-        if (n.getStmts() == null) return;
-        for (Statement stmt : n.getStmts()) {
-           stmt.accept(this, arg);
-       }
+        if (n.getStmts() == null) {
+            // We need to generate an implicit jump to the next state.
+            // XXX: I'm not sure if this is safe...
+            arg.addStatement(Generator.generateDeferredJump(arg.getCurrentState() + 1));
+        } else {
+            for (Statement stmt : n.getStmts()) {
+                stmt.accept(this, arg);
+            }
+        }
     }
 
     @Override
