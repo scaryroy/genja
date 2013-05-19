@@ -5,14 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import japa.parser.ast.body.Parameter;
-import japa.parser.ast.body.VariableDeclaratorId;
 import japa.parser.ast.expr.AssignExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.BreakStmt;
-import japa.parser.ast.stmt.CatchClause;
 import japa.parser.ast.stmt.ContinueStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.ReturnStmt;
@@ -20,9 +17,6 @@ import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.SwitchEntryStmt;
 import japa.parser.ast.stmt.SwitchStmt;
 import japa.parser.ast.stmt.ThrowStmt;
-import japa.parser.ast.stmt.TryStmt;
-import japa.parser.ast.type.ClassOrInterfaceType;
-import japa.parser.ast.type.Type;
 
 /**
  * The generator class contains the state required to create a generator, as well as utility
@@ -38,8 +32,6 @@ class Generator {
      * The variable name containing the currently yielded value.
      */
     public static final NameExpr CURRENT_VAR = new NameExpr("$current");
-
-    public static final NameExpr EXCEPTION_VAR = new NameExpr("$exception");
     
     /**
      * Current implicit loop label number.
@@ -52,11 +44,6 @@ class Generator {
     int switchNum;
 
     /**
-     * Current try state number.
-     */
-    int currentTryState;
-    
-    /**
      * The current label we're in.
      */
     Label label;
@@ -65,12 +52,6 @@ class Generator {
      * The states.
      */
     List<SwitchEntryStmt> states;
-
-    /**
-     * The exception handling states, mapping an exception type to an entry
-     * state to an exit state.
-     */
-    Map<String, Map<Integer, ExceptionHandler>> exceptionHandlers;
 
     /**
      * List of labels.
@@ -84,7 +65,6 @@ class Generator {
         this.loopNum = 0;
         this.switchNum = 0;
         this.states = new ArrayList<SwitchEntryStmt>();
-        this.exceptionHandlers = new HashMap<String, Map<Integer, ExceptionHandler>>();
         this.label = null;
         this.labels = new HashMap<String, Label>();
 
@@ -221,26 +201,6 @@ class Generator {
     boolean canBreakTo(String name) {
         return this.ancestralLabelFor(name) != null;
     }
-
-    /**
-     * Add an exception handler. The return value indicates if the exception
-     * handler is permissible.
-     */
-    boolean addExceptionHandler(Type excType, int entryState, ExceptionHandler handler) {
-        String typeName = excType.toString();
-        
-        if (!this.exceptionHandlers.containsKey(typeName)) {
-            this.exceptionHandlers.put(typeName, new HashMap<Integer, ExceptionHandler>());
-        }
-
-        // Don't let outer exception handlers override inner ones.
-        if (this.exceptionHandlers.get(typeName).containsKey(entryState)) {
-            return false;
-        }
-
-        this.exceptionHandlers.get(typeName).put(entryState, handler);
-        return true;
-    }
     
     /**
      * We can only continue to loops, so we check if a label corresponds to a
@@ -255,41 +215,10 @@ class Generator {
      * Generate the statements for the generator.
      */
     public List<Statement> generate() {
-        List<CatchClause> catches = new ArrayList<CatchClause>();
-
-        for (Map.Entry<String, Map<Integer, ExceptionHandler>> typeEntry : this.exceptionHandlers.entrySet()) {
-            List<SwitchEntryStmt> entries = new ArrayList<SwitchEntryStmt>();
-
-            for (Map.Entry<Integer, ExceptionHandler> handlerEntry : typeEntry.getValue().entrySet()) {
-                List<Statement> handlerStmts = new ArrayList<Statement>();
-                handlerStmts.add(new ExpressionStmt(new AssignExpr(new NameExpr(handlerEntry.getValue().name), Generator.EXCEPTION_VAR, AssignExpr.Operator.assign)));
-                handlerStmts.add(Generator.generateJump(handlerEntry.getValue().catchPoint));
-                entries.add(new SwitchEntryStmt(new IntegerLiteralExpr("" + handlerEntry.getKey()), handlerStmts));
-            }
-
-            List<Statement> handlerStmts = new ArrayList<Statement>();
-            handlerStmts.add(Generator.generateDeferredJump(-1));
-            handlerStmts.add(new ThrowStmt(EXCEPTION_VAR));
-            entries.add(new SwitchEntryStmt(null, handlerStmts));
-
-            List<Statement> stmts = new ArrayList<Statement>();
-            stmts.add(new ExpressionStmt(new AssignExpr(Generator.EXCEPTION_VAR, new NameExpr("e"), AssignExpr.Operator.assign)));
-            stmts.add(new SwitchStmt(Generator.STATE_VAR, entries));
-            catches.add(new CatchClause(
-                    new Parameter(new ClassOrInterfaceType(typeEntry.getKey()), new VariableDeclaratorId("e")),
-                    new BlockStmt(stmts)
-            ));
-        }
-
-        List<Statement> innerStmts = new ArrayList<Statement>();
+        List<Statement> stmts = new ArrayList<Statement>();
         Statement innerLoop = LoopDesugarTransform.makeLoopStmt(new SwitchStmt(STATE_VAR,
                                                                 this.states));
-        innerStmts.add(innerLoop);
-
-        TryStmt tryStmt = new TryStmt(new BlockStmt(innerStmts), catches, new BlockStmt());
-
-        List<Statement> stmts = new ArrayList<Statement>();
-        stmts.add(LoopDesugarTransform.makeLoopStmt(tryStmt));
+        stmts.add(innerLoop);
         return stmts;
     }
 }

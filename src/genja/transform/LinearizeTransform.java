@@ -568,39 +568,12 @@ class LinearizeTransform implements VoidVisitor<Generator> {
 
     @Override
     public void visit(TryStmt n, Generator arg) {
-        if (n.getFinallyBlock() != null) {
-            // TODO: linearize finally
-            throw new TransformException("don't know how to linearize");
-        }
-
-        // Save our current try state.
-        int oldTryState = arg.currentTryState;
-        arg.currentTryState = arg.getCurrentState();
-
-        n.getTryBlock().accept(this, arg);
-        int entryState = arg.getCurrentState();
-        for (CatchClause c : n.getCatchs()) {
-            c.accept(this, arg);
-        }
-        arg.addStatement(entryState, Generator.generateJump(arg.getCurrentState()));
-
-        // Pop off our current try state.
-        arg.currentTryState = oldTryState;
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override
     public void visit(CatchClause n, Generator arg) {
-        arg.newState();
-
-        // Save our catch-point.
-        int catchPoint = arg.getCurrentState();
-
-        // Retrieve the exception so we have access to it.
-        arg.addStatement(new ExpressionStmt(new AssignExpr(new NameExpr(n.getExcept().getId().getName()), new CastExpr(n.getExcept().getType(), Generator.EXCEPTION_VAR), AssignExpr.Operator.assign)));
-        n.getCatchBlock().accept(this, arg);
-        arg.addExceptionHandler(n.getExcept().getType(), arg.currentTryState,
-                                new ExceptionHandler(n.getExcept().getId().getName(),
-                                                     catchPoint));
+        throw new TransformException("don't know how to linearize");
     }
 
     @Override

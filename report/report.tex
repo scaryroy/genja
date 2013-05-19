@@ -202,15 +202,6 @@ number as dictated by enumeration order. We only allow \texttt{continue} stateme
 ancestral loop block.
 \end{itemize}
 
-The transformer also translates \texttt{try}-\texttt{catch} statements. Linearization is a variant
-of continuation-passing style transformation, so, as such, it would be reasonable to say that the
-state machine linearization generates is isomorphic with continuations. Exceptions are a subset of
-continuations -- they represent a non-local jump into another code block. Therefore, we can catch
-all exceptions outside of the state machine and, upon encountering an exception, redirect control
-flow to the appropriate catch state inside the state machine -- manually forwarding exceptions via
-the state machine's continuations. In the case of nested \texttt{catch}es, we always let the
-innermost \texttt{catch}es take precedence.
-
 After all the code has been linearized, we create a trap state that always deferred-jumps to itself
 and returns \texttt{false}. This ensures we don't execute random code in the state machine.
 

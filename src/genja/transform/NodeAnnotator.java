@@ -569,32 +569,13 @@ class NodeAnnotator implements GenericVisitor<Boolean, Void> {
 
     @Override
     public Boolean visit(TryStmt n, Void arg) {
-        boolean needsProcessing = n.getTryBlock().accept(this, arg);
-
-        if (n.getCatchs() != null) {
-            for (CatchClause c : n.getCatchs()) {
-                needsProcessing = c.accept(this, arg) || needsProcessing;
-            }
-        }
-
-        if (n.getFinallyBlock() != null) {
-            needsProcessing = n.getFinallyBlock().accept(this, arg) || needsProcessing;
-        }
-
-        if (needsProcessing) {
-            NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
-            n.setData(nodeAnnotation);
-        }
-        return needsProcessing;
+        // Never touch anything inside a try.
+        return false;
     }
 
     @Override
     public Boolean visit(CatchClause n, Void arg) {
-        if (n.getCatchBlock().accept(this, arg)) {
-            NodeAnnotation nodeAnnotation = new NodeAnnotation(true);
-            n.setData(nodeAnnotation);
-            return true;
-        }
+        // Never touch anything inside a catch.
         return false;
     }
 
